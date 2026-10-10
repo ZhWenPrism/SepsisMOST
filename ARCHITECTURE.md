@@ -2,26 +2,11 @@
 
 ## Computational graph
 
-```mermaid
-flowchart LR
-    A[12 h temporal window<br/>21 features × 12 steps] --> C[Temporal encoder]
-    B[116 static features] --> H[Static encoder]
-    C --> D[Dilated causal TCN<br/>dilations 1 · 2 · 4]
-    D --> E[Selective state-space block]
-    F[SOFAE graph<br/>9 nodes · 3 relations] --> G[Graph-biased top-2 router]
-    E --> G
-    G --> I[Shared expert context]
-    G --> J[Six organ-specific streams]
-    H --> K[Feature fusion]
-    I --> K
-    J --> K
-    F --> L[Directed organ coupling]
-    K --> M[6 competing-risk heads<br/>8 bins × 3 states]
-    L --> M
-    K --> N[3 adverse-event heads]
-    M --> O[Organ-specific cumulative incidence]
-    N --> P[ICU death · septic shock · MODS]
-```
+<p align="center">
+  <img src="assets/figures/sepsis-most-framework.png" width="100%" alt="Sepsis-MOST computational graph">
+</p>
+
+<p align="center"><em>Onset-anchored feature construction, SOFAE graph learning, hybrid temporal encoding, graph-guided expert routing and multi-task prediction.</em></p>
 
 ## Module contract
 
