@@ -29,6 +29,32 @@ Across the six organ systems, the mean cause-specific C-index was 0.795. Perform
   </tbody>
 </table>
 
+<p align="center">
+  <img src="assets/figures/internal-organ-roc-pr.png" width="100%" alt="Internal organ-failure ROC and precision-recall analysis">
+</p>
+
+<p align="center"><em>Internal organ-failure discrimination across the six prediction targets.</em></p>
+
+## Internal adverse-event prediction
+
+The three adverse-event heads are evaluated jointly with the organ-failure tasks while retaining outcome-specific discrimination analyses.
+
+<p align="center">
+  <img src="assets/figures/internal-adverse-event-roc-pr.png" width="100%" alt="Internal adverse-event ROC and precision-recall analysis">
+</p>
+
+<p align="center"><em>Internal discrimination for ICU mortality, septic shock and MODS.</em></p>
+
+## Calibration
+
+Calibration is assessed for both organ-specific cumulative incidence and adverse-event probability outputs.
+
+<p align="center">
+  <img src="assets/figures/internal-calibration.png" width="100%" alt="Calibration of organ-failure and adverse-event predictions">
+</p>
+
+<p align="center"><em>Calibration across the nine prediction targets.</em></p>
+
 ## Cross-cohort validation
 
 Organ-level discrimination remained highest for liver and coagulation failure across both external cohorts. Adverse-event prediction transferred more consistently than the mean organ-level C-index, with ICU mortality AUROC remaining above 0.80 in all three cohorts.
@@ -93,6 +119,14 @@ Task-specific SHAP analyses separate the signals used for six organ-failure outp
 </p>
 
 <p align="center"><em>Feature attributions across six organ-failure and three adverse-event targets.</em></p>
+
+Patient-level attribution complements the global analysis by decomposing individual predictions into additive feature contributions. It is presented as a model-behaviour view rather than a causal explanation.
+
+<p align="center">
+  <img src="assets/figures/patient-level-attribution.png" width="100%" alt="Patient-level feature attribution across Sepsis-MOST targets">
+</p>
+
+<p align="center"><em>Patient-level decomposition of the nine model outputs.</em></p>
 
 ## Interpretation boundaries
 
