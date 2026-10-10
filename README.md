@@ -11,6 +11,16 @@ Sepsis-MOST is a multi-task prognostic framework for early, organ-resolved risk 
 
 The framework combines dilated causal temporal convolutions, a selective state-space encoder and six organ-specific experts. A Sepsis-associated Organ Failure and Adverse Event graph learned only from the development split guides expert routing and downstream organ coupling. ICU death is modelled as a competing event for every organ-specific outcome.
 
+## Framework
+
+The end-to-end design links the sepsis-onset landmark, temporal and static feature streams, training-only SOFAE graph, hybrid temporal encoder, graph-guided expert router and nine prediction targets in one computational pathway.
+
+<p align="center">
+  <img src="assets/figures/sepsis-most-framework.png" width="100%" alt="Sepsis-MOST study design and model architecture">
+</p>
+
+<p align="center"><em>Sepsis-MOST study design and model architecture.</em></p>
+
 ## Core design
 
 - **Onset-anchored prediction** — 21 hourly variables across 12 hours and 116 static features define the prediction state at sepsis onset + 6 hours.
