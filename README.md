@@ -31,17 +31,59 @@ The end-to-end design links the sepsis-onset landmark, temporal and static featu
 
 ## Study design
 
-| Role | Cohort | Patients | Use |
-|:--|:--|--:|:--|
-| Development | MIMIC-IV | 28,800 | Training, validation and internal testing |
-| External validation | eICU-CRD | 24,662 | Frozen-model evaluation |
-| External validation | PKUPH | 4,849 | Frozen-model evaluation in an independent health system |
+<table align="center">
+  <thead>
+    <tr>
+      <th align="left">Role</th>
+      <th align="center">Cohort</th>
+      <th align="center">Patients</th>
+      <th align="left">Use</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr><td>Development</td><td align="center">MIMIC-IV</td><td align="center">28,800</td><td>Training, validation and internal testing</td></tr>
+    <tr><td>External validation</td><td align="center">eICU-CRD</td><td align="center">24,662</td><td>Frozen-model evaluation</td></tr>
+    <tr><td>External validation</td><td align="center">PKUPH</td><td align="center">4,849</td><td>Frozen-model evaluation in an independent health system</td></tr>
+  </tbody>
+</table>
+
+## Evaluation
+
+Internal testing produced a mean organ-level C-index of 0.795. The three adverse-event outputs retained AUROC values above 0.80 in the internal test set and both external cohorts.
+
+<table align="center">
+  <thead>
+    <tr>
+      <th align="left">Outcome</th>
+      <th align="center">Metric</th>
+      <th align="center">MIMIC-IV</th>
+      <th align="center">eICU-CRD</th>
+      <th align="center">PKUPH</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr><td>Mean organ failure</td><td align="center">C-index</td><td align="center"><strong>0.795</strong></td><td align="center">0.709</td><td align="center">0.727</td></tr>
+    <tr><td>ICU mortality</td><td align="center">AUROC</td><td align="center">0.801</td><td align="center">0.811</td><td align="center">0.814</td></tr>
+    <tr><td>Septic shock</td><td align="center">AUROC</td><td align="center">0.917</td><td align="center">0.904</td><td align="center">0.865</td></tr>
+    <tr><td>MODS</td><td align="center">AUROC</td><td align="center">0.918</td><td align="center">0.856</td><td align="center">0.820</td></tr>
+  </tbody>
+</table>
+
+The component analysis supports the combined graph, temporal encoder, expert-routing and competing-risk design. Removing graph guidance produced the largest decline in mean organ C-index among the evaluated component removals.
+
+<p align="center">
+  <img src="assets/figures/component-ablation.png" width="100%" alt="Ablation of Sepsis-MOST components">
+</p>
+
+<p align="center"><em>Component ablation across organ-failure and adverse-event tasks.</em></p>
+
+Complete organ-level metrics, external validation results and interpretation figures are available in [`RESULTS.md`](RESULTS.md).
 
 ## Repository
 
 This repository contains the model specification, release-oriented package layout, manuscript figures and aggregate result tables. Patient-level data, trained weights and source implementation are not distributed here.
 
-Detailed architecture and evaluation records are provided in [`ARCHITECTURE.md`](ARCHITECTURE.md) and [`RESULTS.md`](RESULTS.md).
+The planned source tree is documented in [`ARCHITECTURE.md`](ARCHITECTURE.md). Every implementation directory is reserved as an empty release scaffold; no source file is included.
 
 ## Data governance
 
