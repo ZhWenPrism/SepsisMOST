@@ -47,6 +47,14 @@ The end-to-end design links the sepsis-onset landmark, temporal and static featu
   </tbody>
 </table>
 
+The same onset-anchored eligibility logic was applied across the development and external-validation cohorts. The development cohort was split by patient into training, validation and internal test sets; both external cohorts were reserved for frozen-model evaluation.
+
+<p align="center">
+  <img src="assets/figures/cohort-selection.png" width="100%" alt="Cohort selection for MIMIC-IV, eICU-CRD and PKUPH">
+</p>
+
+<p align="center"><em>Cohort selection and analysis roles across the three study populations.</em></p>
+
 ## Evaluation
 
 Internal testing produced a mean organ-level C-index of 0.795. The three adverse-event outputs retained AUROC values above 0.80 in the internal test set and both external cohorts.
