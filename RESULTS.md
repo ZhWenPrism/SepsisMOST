@@ -54,6 +54,26 @@ Organ-level discrimination remained highest for liver and coagulation failure ac
   </tbody>
 </table>
 
+## Component analysis
+
+The ablation study separates the contributions of graph guidance, expert specialisation, temporal encoding, static features, ranking supervision and competing-risk modelling. Removing the SOFAE graph produced the largest decline in mean organ C-index among the tested component removals, while the full model retained the strongest joint performance across organ failure and adverse-event tasks.
+
+<p align="center">
+  <img src="assets/figures/component-ablation.png" width="100%" alt="Ablation of Sepsis-MOST components">
+</p>
+
+<p align="center"><em>Component ablation across mean organ C-index and adverse-event AUROC.</em></p>
+
+## Learned organ relations
+
+The SOFAE graph represents three distinct data-derived relations: whether one organ tends to fail before another, how frequently outcomes co-occur and how organ failure relates to septic shock or MODS. These frozen relations enter the network through the expert router and the organ-coupling term.
+
+<p align="center">
+  <img src="assets/figures/sofae-relations.png" width="100%" alt="Temporal precedence, co-occurrence and syndrome-trigger relations in the SOFAE graph">
+</p>
+
+<p align="center"><em>Temporal precedence, co-occurrence and syndrome-trigger relation matrices.</em></p>
+
 ## Interpretation boundaries
 
 The study is retrospective. PKUPH neurological failure uses a disorder-of-consciousness proxy because numeric GCS was not routinely available, and its cardiovascular endpoint relies on reconstructed vasopressor exposure. These endpoints are therefore not directly equivalent to their MIMIC-IV and eICU-CRD definitions. Prospective clinical utility has not been established.
