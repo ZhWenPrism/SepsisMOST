@@ -74,6 +74,26 @@ The SOFAE graph represents three distinct data-derived relations: whether one or
 
 <p align="center"><em>Temporal precedence, co-occurrence and syndrome-trigger relation matrices.</em></p>
 
+## External adverse-event discrimination
+
+On eICU-CRD, the frozen model achieved AUROC values of 0.811 for ICU mortality, 0.904 for septic shock and 0.856 for MODS. The curves below show discrimination after direct transfer from MIMIC-IV without cohort-specific retraining.
+
+<p align="center">
+  <img src="assets/figures/eicu-adverse-event-roc.png" width="100%" alt="Adverse-event ROC curves in eICU-CRD">
+</p>
+
+<p align="center"><em>External adverse-event discrimination in eICU-CRD.</em></p>
+
+## Feature attribution
+
+Task-specific SHAP analyses separate the signals used for six organ-failure outputs and three adverse-event outputs. The resulting profiles show organ-dependent attribution patterns while preserving a shared representation across tasks; they describe model behaviour and do not establish causal effects.
+
+<p align="center">
+  <img src="assets/figures/shap-attributions.png" width="100%" alt="SHAP feature attributions across nine Sepsis-MOST prediction targets">
+</p>
+
+<p align="center"><em>Feature attributions across six organ-failure and three adverse-event targets.</em></p>
+
 ## Interpretation boundaries
 
 The study is retrospective. PKUPH neurological failure uses a disorder-of-consciousness proxy because numeric GCS was not routinely available, and its cardiovascular endpoint relies on reconstructed vasopressor exposure. These endpoints are therefore not directly equivalent to their MIMIC-IV and eICU-CRD definitions. Prospective clinical utility has not been established.
