@@ -1,0 +1,43 @@
+# Local environments and credentials
+.env
+.env.*
+.venv/
+venv/
+__pycache__/
+*.py[cod]
+
+# Patient-level and derived clinical data
+data/
+datasets/
+cohorts/
+derived/
+private/
+*.parquet
+*.feather
+*.h5
+*.hdf5
+*.npz
+*.npy
+*.db
+*.sqlite*
+
+# Model artifacts
+checkpoints/
+weights/
+artifacts/
+*.ckpt
+*.pt
+*.pth
+*.onnx
+
+# Local experiments
+runs/
+wandb/
+mlruns/
+logs/
+notebooks/.ipynb_checkpoints/
+
+# System and editor files
+.DS_Store
+.idea/
+.vscode/
