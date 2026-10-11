@@ -3,7 +3,7 @@
     L = L_cr + sum_{a in A} lambda_a L_a,   A = {syn, rank, lb, spec}
 
 The main term L_cr is the competing-risks negative log likelihood summed over
-the six organs (Eq. 19). The four auxiliary terms are the binary cross entropy
+the six organ systems (Eq. 19). The four auxiliary terms are the binary cross entropy
 of the three adverse events (L_syn, Eq. 20), the ranking loss on the 7-day CIF
 (L_rank, Eq. 21), the load-balancing term of the router (L_lb, Eq. 22) and the
 expert specialisation loss (L_spec, Eq. 23).
@@ -40,7 +40,7 @@ def joint_objective(out, cause, ebin, atrisk, etime, evt, events, sofa_mean,
     cause, ebin, atrisk, evt, etime
                (B, 6) organ labels; see docs/DATA_FORMAT.md
     events     (B, 3) float adverse-event labels (ICU death, septic shock, MODS)
-    sofa_mean  (B, 6) mean organ SOFA subscores over the observation window
+    sofa_mean  (B, 6) mean SOFA-2 domain scores over the observation window
     """
     nll = sum(cr_nll(out["cr_logits"][:, k], cause[:, k], ebin[:, k], atrisk[:, k])
               for k in range(N_ORGANS))

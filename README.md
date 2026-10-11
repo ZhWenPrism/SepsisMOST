@@ -17,7 +17,7 @@
   <img src="assets/figures/sepsis-most-framework.png" width="100%" alt="Sepsis-MOST study design and model architecture">
 </p>
 
-Developed in collaboration with **Peking University People's Hospital**, Sepsis-MOST is a clinical forecasting framework for modelling how sepsis progresses across interconnected organ systems. The model uses longitudinal intensive-care records around the onset of sepsis to estimate the short-term risk of kidney, lung, cardiovascular, neurological, coagulation and liver failure while jointly predicting septic shock, multiple organ dysfunction syndrome and ICU mortality.
+Developed in collaboration with **Peking University People's Hospital**, Sepsis-MOST is a clinical forecasting framework for modelling how sepsis progresses across interconnected organ systems. The model uses longitudinal intensive-care records around the onset of sepsis to estimate the short-term risk of kidney, respiratory, cardiovascular, brain, haemostatic and liver failure while jointly predicting septic shock, multiple organ dysfunction syndrome and ICU mortality.
 
 The project is motivated by a practical limitation of conventional bedside assessment. Scores such as SOFA describe the organ dysfunction that is already present, but they do not directly indicate which organ is most likely to fail next, when that failure may occur or how deterioration in one organ changes the risk of deterioration elsewhere. Existing prediction systems also tend to focus on a single outcome or build separate models for each endpoint, leaving the physiological dependence between organ systems largely unused.
 
@@ -88,7 +88,7 @@ This repository contains the source code used to construct and train Sepsis-MOST
 
 Sepsis is not a single static condition. Its clinical course is shaped by a sequence of interacting organ injuries that may stabilise, recover or progress toward shock, multiple organ dysfunction and death. A useful prognostic system must therefore do more than produce one mortality score. It should preserve the identity of individual organ systems, recognise their shared physiological context and represent the fact that some outcomes prevent others from being observed.
 
-Sepsis-MOST formulates this problem as nine related tasks. Six tasks estimate the cumulative incidence of new organ failure over the following seven days, and three tasks estimate the probability of septic shock, MODS and ICU mortality over the same horizon. The organ tasks are modelled separately because failure of the kidney, lungs, heart, brain, coagulation system and liver has different predictors and clinical consequences. They are trained together because the deterioration of these systems is physiologically connected.
+Sepsis-MOST formulates this problem as nine related tasks. Six tasks estimate the cumulative incidence of new organ failure over the following seven days, and three tasks estimate the probability of septic shock, MODS and ICU mortality over the same horizon. The organ tasks are modelled separately because kidney, respiratory, cardiovascular, brain, haemostatic and liver failure have different predictors and clinical consequences. They are trained together because the deterioration of these systems is physiologically connected.
 
 The prediction landmark is fixed at six hours after sepsis onset. Information is collected from the preceding 12-hour window, spanning six hours before to six hours after onset. Events already present at the landmark are masked for the corresponding task, while the patient can still contribute to other outcomes that have not yet occurred. This task-specific landmarking prevents an existing event from being presented as a future prediction and allows the model to retain clinically informative patients rather than removing an entire admission because one endpoint is already present.
 
@@ -106,7 +106,7 @@ For every organ, ICU death before organ failure is treated as a competing event.
 
 ## Clinical scope
 
-The prediction space covers six organ systems routinely represented in sepsis severity assessment. Kidney failure is defined through renal dysfunction and renal-replacement criteria; lung failure through severe oxygenation impairment under ventilatory support; cardiovascular failure through advanced vasopressor or mechanical-support requirements; neurological failure through severe impairment of consciousness; coagulation failure through thrombocytopenia; and liver failure through marked hyperbilirubinaemia.
+The prediction space covers six organ systems routinely represented in sepsis severity assessment. Kidney failure is defined through renal dysfunction and renal-replacement criteria; respiratory failure through severe oxygenation impairment under ventilatory support; cardiovascular failure through advanced vasopressor or mechanical-support requirements; brain failure through severe impairment of consciousness; haemostatic failure through thrombocytopenia; and liver failure through marked hyperbilirubinaemia.
 
 The three adverse-event outputs represent clinically consequential states that often trigger escalation of care. Septic shock captures circulatory and metabolic deterioration, MODS represents concurrent failure of multiple organs, and ICU mortality provides a terminal outcome shared across the organ-specific competing-risk tasks. These outputs are estimated jointly but remain distinct, allowing performance and calibration to be assessed separately for each endpoint.
 
@@ -194,9 +194,9 @@ Evaluation is organised around four questions: whether the model separates highe
 
 ### Internal organ-failure prediction
 
-In the held-out MIMIC-IV test set, the mean organ-level C-index reported in the current manuscript is 0.795. Discrimination is strongest for liver failure and coagulation failure, with C-indices of 0.905 and 0.877. Kidney and cardiovascular failure reach 0.777 and 0.761, while lung and neurological failure are more difficult, at 0.730 and 0.723.
+In the held-out MIMIC-IV test set, the mean organ-level C-index reported in the current manuscript is 0.795. Discrimination is strongest for liver failure and haemostatic failure, with C-indices of 0.905 and 0.877. Kidney and cardiovascular failure reach 0.777 and 0.761, while respiratory and brain failure are more difficult, at 0.730 and 0.723.
 
-Performance is also assessed at multiple horizons rather than only at the seven-day endpoint. Across organs, discrimination is highest near the earlier prediction windows and generally declines as the horizon becomes more distant. This pattern is especially relevant for neurological failure, where the available onset-centred record contains less information about events occurring several days later.
+Performance is also assessed at multiple horizons rather than only at the seven-day endpoint. Across organs, discrimination is highest near the earlier prediction windows and generally declines as the horizon becomes more distant. This pattern is especially relevant for brain failure, where the available onset-centred record contains less information about events occurring several days later.
 
 <p align="center">
   <img src="assets/figures/internal-organ-roc-pr.png" width="100%" alt="Internal organ-failure ROC and precision-recall analysis">
@@ -230,7 +230,7 @@ For the three adverse events, calibration slopes are reported near the ideal val
 
 ### External transfer
 
-The frozen model is applied directly to eICU-CRD and PKUPH. Brain failure was not evaluated at PKUPH because numeric Glasgow Coma Scale scores were rarely recorded there, so organ discrimination is compared over the five organs evaluated in all three cohorts: the mean C-index is 0.810 internally, 0.719 in eICU-CRD and 0.736 at PKUPH. Adverse-event discrimination transfers more consistently: the reported AUROCs for ICU mortality, septic shock and MODS are 0.811, 0.904 and 0.856 in eICU-CRD and 0.814, 0.865 and 0.832 at PKUPH, where MODS is counted over the five evaluated organs.
+The frozen model is applied directly to eICU-CRD and PKUPH. Brain failure was not evaluated at PKUPH because numeric Glasgow Coma Scale scores were rarely recorded there, so organ discrimination is compared over the five organ systems evaluated in all three cohorts: the mean C-index is 0.810 internally, 0.719 in eICU-CRD and 0.736 at PKUPH. Adverse-event discrimination transfers more consistently: the reported AUROCs for ICU mortality, septic shock and MODS are 0.811, 0.904 and 0.856 in eICU-CRD and 0.814, 0.865 and 0.832 at PKUPH, where MODS is counted over the five evaluated organ systems.
 
 Transfer is not uniform across organ systems. Differences in vasopressor documentation, neurological assessment, missingness, clinical workflow and event prevalence can change both the available predictors and the operational meaning of an endpoint. External results should therefore be read at the task level rather than reduced to a single average.
 
@@ -243,7 +243,7 @@ Transfer is not uniform across organ systems. Differences in vasopressor documen
 <p align="center">
   <img src="assets/figures/pkuph-organ-roc-pr.png" width="100%" alt="Organ-failure ROC and precision-recall curves in PKUPH">
   <br>
-  <sub>Organ-failure discrimination for the five organs evaluated at PKUPH, with 95% bootstrap confidence bands.</sub>
+  <sub>Organ-failure discrimination for the five organ systems evaluated at PKUPH, with 95% bootstrap confidence bands.</sub>
 </p>
 
 <p align="center">
@@ -407,6 +407,6 @@ The repository does not include raw ICU records, patient-level derivatives, prot
 
 This is a retrospective multicohort modelling study, not a prospective clinical trial. The reported results establish performance within the analysed datasets but do not establish clinical effectiveness, workflow benefit or patient-outcome improvement. Decision thresholds, alert burden, treatment response and prospective transportability require separate evaluation.
 
-Endpoint harmonisation is also imperfect across databases. In the PKUPH cohort, numeric Glasgow Coma Scale scores were rarely recorded, so brain failure was not evaluated and MODS was counted over the other five organs. Cardiovascular failure at PKUPH depends on vasopressor rates reconstructed from order totals. These endpoints are not fully equivalent to their MIMIC-IV and eICU-CRD counterparts and should be interpreted as cohort-specific operationalisations.
+Endpoint harmonisation is also imperfect across databases. In the PKUPH cohort, numeric Glasgow Coma Scale scores were rarely recorded, so brain failure was not evaluated and MODS was counted over the other five organ systems. Cardiovascular failure at PKUPH depends on vasopressor rates reconstructed from order totals. These endpoints are not fully equivalent to their MIMIC-IV and eICU-CRD counterparts and should be interpreted as cohort-specific operationalisations.
 
 Sepsis-MOST is therefore presented as a research framework for organ-resolved prognosis, multicohort validation and model interpretation. It is not a medical device and is not intended for direct clinical decision-making in its current form.

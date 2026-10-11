@@ -89,8 +89,8 @@ def build_sofae_graph(onsets: pd.DataFrame, min_support: int = 50, dim: int = 8)
     Parameters
     ----------
     onsets
-        One row per patient with the columns ``kidney``, ``lung``, ``heart``,
-        ``brain``, ``coagulation``, ``liver``, ``sepsis`` and ``septic_shock``
+        One row per patient with the columns ``kidney``, ``respiratory``, ``cardiovascular``,
+        ``brain``, ``haemostasis``, ``liver``, ``sepsis`` and ``septic_shock``
         holding onset times (datetime, or hours on a common time axis within
         each patient); missing values mean the event did not occur. A ``mods``
         column, if absent, is derived as the second earliest organ failure.

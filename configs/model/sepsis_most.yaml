@@ -33,7 +33,7 @@ augmentation:
 data:
   split_seed: 42
   split_fractions: [0.70, 0.15, 0.15]   # training, validation, internal test
-  n_raw_channels: 7         # organ SOFA subscores and total SOFA keep their scale
+  n_raw_channels: 7         # SOFA-2 domain scores and total SOFA keep their scale
 
 # One network is trained per seed; predictions are averaged over the networks.
 seeds: [42, 7, 2024]

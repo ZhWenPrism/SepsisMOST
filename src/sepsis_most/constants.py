@@ -2,7 +2,7 @@
 from __future__ import annotations
 
 #: Organ systems, in the order used by every organ-indexed array.
-ORGANS = ("kidney", "lung", "heart", "brain", "coagulation", "liver")
+ORGANS = ("kidney", "respiratory", "cardiovascular", "brain", "haemostasis", "liver")
 N_ORGANS = len(ORGANS)
 
 #: Adverse events predicted by the three adverse-event heads, in output order.
@@ -14,7 +14,7 @@ SYNDROME_NODES = ("sepsis", "septic_shock", "mods")
 #: The nine SOFAE graph nodes: six organ failures followed by three syndromes.
 GRAPH_NODES = ORGANS + SYNDROME_NODES
 
-#: The first six temporal channels are the organ SOFA subscores (in ``ORGANS``
+#: The first six temporal channels are the SOFA-2 domain scores (in ``ORGANS``
 #: order) and the seventh is the total SOFA score. These channels keep their
 #: native scale and are not standardised.
 N_RAW_CHANNELS = 7

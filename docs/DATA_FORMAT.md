@@ -8,7 +8,7 @@ All arrays are NumPy arrays stored in `.npz` files. Rows of the temporal and sta
 
 | Array | Shape | Type | Content |
 |:--|:--|:--|:--|
-| `X` | (N, T, F) | float32 | Hourly features over the observation window, from 6 h before to 6 h after sepsis onset. Channels 0 to 5 are the SOFA subscores of the kidney, lung, heart, brain, coagulation and liver, in this order, and channel 6 is the total SOFA score. These seven channels keep their native scale; all other channels are standardised by the training code. |
+| `X` | (N, T, F) | float32 | Hourly features over the observation window, from 6 h before to 6 h after sepsis onset. Channels 0 to 5 are the SOFA-2 domain scores of the kidney, respiratory, cardiovascular, brain, haemostasis and liver systems, in this order, and channel 6 is the total SOFA score. These seven channels keep their native scale; all other channels are standardised by the training code. |
 | `atrisk` | (N, 6) | int | 1 if the patient is alive and free of failure of the organ at the time of prediction (onset + 6 h), else 0. Patients with 0 are masked from that organ's likelihood. |
 | `cause` | (N, 6) | int | 0 = failure of the organ, 1 = ICU death before failure of the organ, -1 = censored. |
 | `ebin` | (N, 6) | int | Index (0 to K - 1) of the time bin in which the event or censoring falls. |
@@ -27,7 +27,7 @@ An optional integer array `stay_id` may be stored in both the temporal and the s
 
 ## Event onset table (`--onsets`, SOFAE graph)
 
-A CSV or Parquet table with one row per patient and the columns `kidney`, `lung`, `heart`, `brain`, `coagulation`, `liver`, `sepsis` and `septic_shock`. Each column holds the onset time of the event, either as a datetime (use `--datetime`) or in hours on a common time axis within each patient, and is empty when the event did not occur. MODS onset is derived as the second earliest organ failure.
+A CSV or Parquet table with one row per patient and the columns `kidney`, `respiratory`, `cardiovascular`, `brain`, `haemostasis`, `liver`, `sepsis` and `septic_shock`. Each column holds the onset time of the event, either as a datetime (use `--datetime`) or in hours on a common time axis within each patient, and is empty when the event did not occur. MODS onset is derived as the second earliest organ failure.
 
 ## Split file (optional, `--split-file`)
 

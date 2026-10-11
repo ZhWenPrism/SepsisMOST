@@ -45,5 +45,5 @@ notebooks/.ipynb_checkpoints/
 # Build and test artefacts
 .pytest_cache/
 *.egg-info/
-build/
-dist/
+/build/
+/dist/

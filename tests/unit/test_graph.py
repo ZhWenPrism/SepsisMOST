@@ -7,8 +7,8 @@ from sepsis_most.graph.relations import add_mods_onset, prune, relation_matrices
 
 
 def test_mods_onset_is_second_organ_failure():
-    table = pd.DataFrame({"kidney": [5.0, np.nan], "lung": [2.0, 3.0], "heart": [9.0, np.nan],
-                          "brain": [np.nan] * 2, "coagulation": [np.nan] * 2, "liver": [np.nan] * 2})
+    table = pd.DataFrame({"kidney": [5.0, np.nan], "respiratory": [2.0, 3.0], "cardiovascular": [9.0, np.nan],
+                          "brain": [np.nan] * 2, "haemostasis": [np.nan] * 2, "liver": [np.nan] * 2})
     out = add_mods_onset(table)
     assert out["mods"].iloc[0] == 5.0
     assert np.isnan(out["mods"].iloc[1])

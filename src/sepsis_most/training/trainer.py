@@ -1,7 +1,7 @@
 """Optimisation of one Sepsis-MOST network.
 
 All loss terms are optimised jointly with AdamW under a cosine learning-rate
-schedule. After every epoch the mean cause-specific C-index of the six organs
+schedule. After every epoch the mean cause-specific C-index of the six organ systems
 is computed on the validation split, the best state is kept, and training stops
 when the validation C-index has not improved for ``patience`` epochs.
 """
@@ -85,7 +85,7 @@ def train_network(seed: int, Xn: np.ndarray, Sn: np.ndarray, data: CohortTensors
             if cfg.augmentation.jitter > 0:
                 xb, sb = jitter(xb, sb, cfg.augmentation.jitter)
             out = model(xb, sb)
-            sofa_mean = Xt[bb][:, :, :N_ORGANS].mean(1)              # un-augmented SOFA subscores
+            sofa_mean = Xt[bb][:, :, :N_ORGANS].mean(1)              # un-augmented SOFA-2 domain scores
             loss = joint_objective(out, cause[bb], ebin[bb], atr[bb], etime[bb], evt[bb],
                                    events[bb], sofa_mean, cfg.loss)
             opt.zero_grad()

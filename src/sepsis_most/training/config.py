@@ -42,7 +42,7 @@ class AugmentConfig:
 class DataConfig:
     split_seed: int = 42
     split_fractions: tuple = (0.70, 0.15, 0.15)   # train, validation, internal test
-    n_raw_channels: int = 7             # SOFA subscores and total SOFA are not standardised
+    n_raw_channels: int = 7             # SOFA-2 domain scores and total SOFA are not standardised
 
 
 @dataclass

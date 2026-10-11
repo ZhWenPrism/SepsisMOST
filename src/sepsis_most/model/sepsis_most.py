@@ -70,7 +70,7 @@ class SepsisMOST(nn.Module):
         self.event_head = nn.Linear(d_model + d_static, len(ADVERSE_EVENTS))
 
     def graph_state(self, x):
-        """Graph vector e_t of each hour (Eq. 8): SOFA subscores / 4 times the organ embeddings."""
+        """Graph vector e_t of each hour (Eq. 8): SOFA-2 domain scores / 4 times the organ embeddings."""
         sofa = x[:, :, :N_ORGANS].clamp(0, 4) / 4.0
         return sofa @ self.graph_organ_emb
 

@@ -3,7 +3,7 @@
 For one organ, each patient a with an observed failure is compared with every
 at-risk patient whose event or censoring time is later. A pair is concordant
 when patient a has the higher predicted 7-day CIF, and ties count one half.
-The mean of this index over the six organs on the validation split is the
+The mean of this index over the six organ systems on the validation split is the
 early-stopping criterion.
 """
 from __future__ import annotations

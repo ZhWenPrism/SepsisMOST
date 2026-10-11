@@ -77,7 +77,7 @@ def stratified_split(death, seed: int = 42, fractions=(0.70, 0.15, 0.15)):
 class Standardiser:
     """z-score standardisation fitted on the training split.
 
-    The first ``N_RAW_CHANNELS`` temporal channels (organ SOFA subscores and
+    The first ``N_RAW_CHANNELS`` temporal channels (SOFA-2 domain scores and
     total SOFA) keep their native scale.
     """
 
