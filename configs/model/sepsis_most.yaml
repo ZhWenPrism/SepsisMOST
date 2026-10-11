@@ -1,0 +1,39 @@
+# Sepsis-MOST training configuration.
+
+model:
+  d_model: 96               # hidden size D of the Temporal Feature Extractor
+  d_state: 16               # state size of the selective state space layer
+  d_static: 64              # size of the static embedding
+  expert_hidden: 128        # hidden size of each two-layer organ expert
+  tcn_dilations: [1, 2, 4]  # three dilated causal TCN blocks
+  kernel_size: 3
+  top_k: 2                  # experts kept by the KG-MoE gate
+  dropout: 0.15
+
+loss:
+  rank: 0.15                # lambda_rank, ranking loss
+  syn: 0.5                  # lambda_syn, adverse-event cross entropy
+  lb: 0.01                  # lambda_lb, load balancing
+  spec: 0.2                 # lambda_spec, expert specialisation
+  rank_sigma: 0.1           # sigma of the ranking loss
+  spec_tau: 2.0             # tau of the specialisation target
+
+optimisation:
+  learning_rate: 2.0e-3     # AdamW
+  weight_decay: 2.0e-4
+  epochs: 60                # cosine schedule length and epoch limit
+  batch_size: 256
+  patience: 10              # early stopping on the validation mean C-index
+  min_delta: 1.0e-4
+  grad_clip: 1.0
+
+augmentation:
+  jitter: 0.1               # Gaussian input jitter on training batches
+
+data:
+  split_seed: 42
+  split_fractions: [0.70, 0.15, 0.15]   # training, validation, internal test
+  n_raw_channels: 7         # organ SOFA subscores and total SOFA keep their scale
+
+# One network is trained per seed; predictions are averaged over the networks.
+seeds: [42, 7, 2024]

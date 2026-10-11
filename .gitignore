@@ -41,3 +41,9 @@ notebooks/.ipynb_checkpoints/
 .DS_Store
 .idea/
 .vscode/
+
+# Build and test artefacts
+.pytest_cache/
+*.egg-info/
+build/
+dist/

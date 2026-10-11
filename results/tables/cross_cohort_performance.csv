@@ -2,13 +2,14 @@ outcome_group,outcome,metric,mimic_iv,eicu_crd,pkuph
 organ_failure,Kidney,C-index,0.777,0.715,0.753
 organ_failure,Lung,C-index,0.730,0.663,0.672
 organ_failure,Heart,C-index,0.761,0.613,0.592
-organ_failure,Brain,C-index,0.723,0.663,0.680
+organ_failure,Brain,C-index,0.723,0.663,
 organ_failure,Coagulation,C-index,0.877,0.766,0.802
 organ_failure,Liver,C-index,0.905,0.837,0.862
-organ_failure,Mean,C-index,0.795,0.709,0.727
+organ_failure,Mean (six organs),C-index,0.795,0.709,
+organ_failure,Mean (five organs),C-index,0.810,0.719,0.736
 adverse_event,ICU mortality,AUROC,0.801,0.811,0.814
 adverse_event,Septic shock,AUROC,0.917,0.904,0.865
-adverse_event,MODS,AUROC,0.918,0.856,0.820
+adverse_event,MODS,AUROC,0.918,0.856,0.832
 adverse_event,ICU mortality,AUPRC,0.315,0.385,0.307
 adverse_event,Septic shock,AUPRC,0.809,0.737,0.727
-adverse_event,MODS,AUPRC,0.937,0.833,0.714
+adverse_event,MODS,AUPRC,0.937,0.833,0.684

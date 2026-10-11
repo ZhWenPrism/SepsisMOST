@@ -13,5 +13,7 @@
 | `shap-attributions.png` | Fig. 10 | Global feature attribution across nine targets |
 | `patient-level-attribution.png` | Fig. 11 | Patient-level attribution across nine targets |
 | `eicu-adverse-event-roc.png` | Fig. 13 | External adverse-event ROC curves in eICU-CRD |
+| `pkuph-organ-roc-pr.png` | Fig. 14 | Organ-failure ROC and precision-recall curves in PKUPH |
+| `pkuph-adverse-event-roc-pr.png` | Fig. 15 | Adverse-event ROC and precision-recall curves in PKUPH |
 
 Figures are full-frame exports from the current manuscript record. No patient identifiers or patient-level data are shown.

@@ -57,7 +57,7 @@ Calibration is assessed for both organ-specific cumulative incidence and adverse
 
 ## Cross-cohort validation
 
-Organ-level discrimination remained highest for liver and coagulation failure across both external cohorts. Adverse-event prediction transferred more consistently than the mean organ-level C-index, with ICU mortality AUROC remaining above 0.80 in all three cohorts.
+Organ-level discrimination remained highest for liver and coagulation failure across both external cohorts. Brain failure was not evaluated at PKUPH because numeric Glasgow Coma Scale scores were rarely recorded there; the mean over the five organs evaluated in all cohorts is therefore reported alongside the six-organ mean, and MODS at PKUPH counts failure of two or more of the five evaluated organs. Adverse-event prediction transferred more consistently than organ-level discrimination, with ICU mortality AUROC remaining above 0.80 in all three cohorts.
 
 <table align="center">
   <thead>
@@ -70,13 +70,14 @@ Organ-level discrimination remained highest for liver and coagulation failure ac
     </tr>
   </thead>
   <tbody>
-    <tr><td>Mean organ failure</td><td align="center">C-index</td><td align="center">0.795</td><td align="center">0.709</td><td align="center">0.727</td></tr>
+    <tr><td>Mean organ failure, six organs</td><td align="center">C-index</td><td align="center">0.795</td><td align="center">0.709</td><td align="center">—</td></tr>
+    <tr><td>Mean organ failure, five organs</td><td align="center">C-index</td><td align="center">0.810</td><td align="center">0.719</td><td align="center">0.736</td></tr>
     <tr><td>ICU mortality</td><td align="center">AUROC</td><td align="center">0.801</td><td align="center">0.811</td><td align="center">0.814</td></tr>
     <tr><td>Septic shock</td><td align="center">AUROC</td><td align="center">0.917</td><td align="center">0.904</td><td align="center">0.865</td></tr>
-    <tr><td>MODS</td><td align="center">AUROC</td><td align="center">0.918</td><td align="center">0.856</td><td align="center">0.820</td></tr>
+    <tr><td>MODS</td><td align="center">AUROC</td><td align="center">0.918</td><td align="center">0.856</td><td align="center">0.832</td></tr>
     <tr><td>ICU mortality</td><td align="center">AUPRC</td><td align="center">0.315</td><td align="center">0.385</td><td align="center">0.307</td></tr>
     <tr><td>Septic shock</td><td align="center">AUPRC</td><td align="center">0.809</td><td align="center">0.737</td><td align="center">0.727</td></tr>
-    <tr><td>MODS</td><td align="center">AUPRC</td><td align="center">0.937</td><td align="center">0.833</td><td align="center">0.714</td></tr>
+    <tr><td>MODS</td><td align="center">AUPRC</td><td align="center">0.937</td><td align="center">0.833</td><td align="center">0.684</td></tr>
   </tbody>
 </table>
 
@@ -110,6 +111,22 @@ On eICU-CRD, the frozen model achieved AUROC values of 0.811 for ICU mortality, 
 
 <p align="center"><em>External adverse-event discrimination in eICU-CRD.</em></p>
 
+## External discrimination at PKUPH
+
+At PKUPH, the frozen model reached a mean C-index of 0.736 (95% CI 0.724 to 0.750) over the five evaluated organs. The AUROCs were 0.814 for ICU mortality, 0.865 for septic shock and 0.832 for MODS. The curves below show the ROC and precision-recall curves with 95% bootstrap confidence bands.
+
+<p align="center">
+  <img src="assets/figures/pkuph-organ-roc-pr.png" width="100%" alt="Organ-failure ROC and precision-recall curves in PKUPH">
+</p>
+
+<p align="center"><em>Organ-failure discrimination for the five organs evaluated at PKUPH.</em></p>
+
+<p align="center">
+  <img src="assets/figures/pkuph-adverse-event-roc-pr.png" width="85%" alt="Adverse-event ROC and precision-recall curves in PKUPH">
+</p>
+
+<p align="center"><em>Adverse-event discrimination at PKUPH.</em></p>
+
 ## Feature attribution
 
 Task-specific SHAP analyses separate the signals used for six organ-failure outputs and three adverse-event outputs. The resulting profiles show organ-dependent attribution patterns while preserving a shared representation across tasks; they describe model behaviour and do not establish causal effects.
@@ -130,7 +147,7 @@ Patient-level attribution complements the global analysis by decomposing individ
 
 ## Interpretation boundaries
 
-The study is retrospective. PKUPH neurological failure uses a disorder-of-consciousness proxy because numeric GCS was not routinely available, and its cardiovascular endpoint relies on reconstructed vasopressor exposure. These endpoints are therefore not directly equivalent to their MIMIC-IV and eICU-CRD definitions. Prospective clinical utility has not been established.
+The study is retrospective. At PKUPH, numeric GCS was rarely recorded, so brain failure was not evaluated and MODS was counted over the other five organs; the cardiovascular endpoint relies on vasopressor rates reconstructed from order totals. These endpoints are therefore not directly equivalent to their MIMIC-IV and eICU-CRD definitions. Prospective clinical utility has not been established.
 
 ## Aggregate tables
 

@@ -7,7 +7,7 @@
 [![Status](https://img.shields.io/badge/Status-research_project-315E6B?style=flat-square)](#research-overview)
 [![Clinical AI](https://img.shields.io/badge/Clinical_AI-sepsis_prognosis-B76E5A?style=flat-square)](#clinical-scope)
 [![Validation](https://img.shields.io/badge/Validation-multicohort-697F4B?style=flat-square)](#cohort-design)
-[![Code](https://img.shields.io/badge/Source-release_staged-6B7280?style=flat-square)](#repository)
+[![Code](https://img.shields.io/badge/Code-model_and_training-6B7280?style=flat-square)](#code)
 
 <sub>longitudinal EHR · organ crosstalk · competing risks · multi-task learning · external validation</sub>
 
@@ -23,7 +23,7 @@ The project is motivated by a practical limitation of conventional bedside asses
 
 Sepsis-MOST addresses this gap with a unified architecture that combines onset-aligned temporal modelling, a data-derived organ-event graph, six organ-specialised experts and competing-risk prediction. The graph represents recurrent temporal and co-occurrence patterns among organ failures and adverse events; it then guides expert routing and downstream organ coupling. Each organ retains a dedicated prediction pathway, so cross-organ information can be shared without collapsing all outcomes into one undifferentiated risk score.
 
-The current repository is a research-facing release of the project specification. It contains the model architecture, manuscript figures, aggregate result tables and a structured source-release blueprint. Patient-level data, trained checkpoints and implementation code are intentionally excluded from this branch.
+This repository contains the source code used to construct and train Sepsis-MOST: the SOFAE graph constructor, the network, the training objective, and the optimisation and inference procedures. It also provides the manuscript figures and aggregate result tables. Cohort extraction, outcome labelling and feature construction are performed upstream of this code and are not part of the present release. No patient-level data, derived datasets or trained weights are distributed.
 
 ## At a glance
 
@@ -120,7 +120,7 @@ The framework is intended for early risk stratification research. It does not pr
 
 ## Cohort design
 
-The development cohort is constructed from MIMIC-IV. After applying the study's sepsis and landmark eligibility criteria, 28,800 patients are included and partitioned by patient into training, validation and internal test subsets in a 70:15:15 ratio. The held-out internal test set contains 4,321 patients and is not used for parameter estimation, model selection or graph construction.
+The development cohort is constructed from MIMIC-IV. After applying the study's sepsis and landmark eligibility criteria, 28,800 patients are included and split into training, validation and internal test subsets in a 70:15:15 ratio, stratified by ICU mortality. The internal test set contains 4,321 patients and is not used for parameter estimation or model selection.
 
 External evaluation uses two distinct settings. The eICU Collaborative Research Database contributes 24,662 eligible patients from a multicentre US critical-care environment. The institutional PKUPH cohort contributes 4,849 eligible patients from a Chinese health system and provides the clinical collaboration component of the project. Both cohorts receive the frozen MIMIC-IV model directly, without cohort-specific retraining or recalibration.
 
@@ -140,7 +140,7 @@ Two complementary input representations are constructed from the same observatio
 
 The static branch contains 116 summary features. Repeated measurements are represented through their recent value, range, mean, measurement count and within-window trend, with additional descriptors for urine output, neurological status, ventilatory support and related clinical context. The static branch therefore captures distributional and trajectory summaries that may be difficult to recover from a short hourly sequence alone.
 
-Preprocessing parameters are estimated from the development training split and carried forward to validation and external evaluation. Keeping the landmark, transformation and task-masking logic fixed is essential to separating model transfer from site-specific refitting.
+Standardisation parameters are estimated on the training split and carried forward unchanged to validation, internal testing and external evaluation. Keeping the landmark, transformation and task-masking logic fixed is essential to separating model transfer from site-specific refitting.
 
 ## Model design
 
@@ -152,11 +152,11 @@ This design gives the model two views of the same clinical period. The temporal 
 
 ### SOFAE graph constructor
 
-The Sepsis-associated Organ Failure and Adverse Event graph contains nine nodes: six organ failures and three adverse events. It is an empirical organ-event graph learned from the order and joint occurrence of outcomes in the MIMIC-IV training split. It is not a literature ontology and does not import external biomedical knowledge.
+The Sepsis-associated Organ Failure and Adverse Event graph contains nine nodes: six organ failures and three syndrome nodes (sepsis, septic shock and MODS). It is an empirical organ-event graph learned from the order and joint occurrence of outcomes in the MIMIC-IV development data. It is not a literature ontology and does not import external biomedical knowledge.
 
 Three relation families are represented. Temporal-precedence relations describe how often one organ failure appears before another. Co-occurrence relations quantify how frequently outcomes are observed in the same patient. Syndrome-trigger relations connect organ dysfunction with septic shock and MODS. Weakly supported edges are pruned, and the retained relations are compressed into fixed spectral node embeddings.
 
-The graph is estimated once from the training split and then frozen. Validation, internal testing and external cohorts do not contribute to its edges, weights or embeddings. This prevents outcome information from the evaluation cohorts from entering the routing structure.
+The graph is estimated once and then frozen. The external cohorts do not contribute to its edges, weights or embeddings, so no outcome information from external evaluation enters the routing structure.
 
 ### Hybrid temporal encoder
 
@@ -186,7 +186,7 @@ The three adverse-event heads read the shared representation and estimate the se
   <sub>Onset-aligned feature construction, empirical organ-event graph learning, hybrid temporal encoding and graph-guided multi-task prediction.</sub>
 </p>
 
-The module contracts, tensor interfaces and planned source hierarchy are documented in [`ARCHITECTURE.md`](ARCHITECTURE.md).
+The module contracts and the source layout are documented in [`ARCHITECTURE.md`](ARCHITECTURE.md); the implementation is described under [Code](#code).
 
 ## Evaluation overview
 
@@ -230,7 +230,7 @@ For the three adverse events, calibration slopes are reported near the ideal val
 
 ### External transfer
 
-The frozen model is applied directly to eICU-CRD and PKUPH. The current manuscript reports mean organ-level C-indices of 0.709 in eICU-CRD and 0.727 in PKUPH, compared with 0.795 internally. Adverse-event discrimination transfers more consistently: the reported AUROCs for ICU mortality, septic shock and MODS are 0.811, 0.904 and 0.856 in eICU-CRD and 0.814, 0.865 and 0.820 in PKUPH.
+The frozen model is applied directly to eICU-CRD and PKUPH. Brain failure was not evaluated at PKUPH because numeric Glasgow Coma Scale scores were rarely recorded there, so organ discrimination is compared over the five organs evaluated in all three cohorts: the mean C-index is 0.810 internally, 0.719 in eICU-CRD and 0.736 at PKUPH. Adverse-event discrimination transfers more consistently: the reported AUROCs for ICU mortality, septic shock and MODS are 0.811, 0.904 and 0.856 in eICU-CRD and 0.814, 0.865 and 0.832 at PKUPH, where MODS is counted over the five evaluated organs.
 
 Transfer is not uniform across organ systems. Differences in vasopressor documentation, neurological assessment, missingness, clinical workflow and event prevalence can change both the available predictors and the operational meaning of an endpoint. External results should therefore be read at the task level rather than reduced to a single average.
 
@@ -238,6 +238,18 @@ Transfer is not uniform across organ systems. Differences in vasopressor documen
   <img src="assets/figures/eicu-adverse-event-roc.png" width="100%" alt="External adverse-event ROC curves in eICU-CRD">
   <br>
   <sub>External adverse-event discrimination in eICU-CRD using the frozen development model.</sub>
+</p>
+
+<p align="center">
+  <img src="assets/figures/pkuph-organ-roc-pr.png" width="100%" alt="Organ-failure ROC and precision-recall curves in PKUPH">
+  <br>
+  <sub>Organ-failure discrimination for the five organs evaluated at PKUPH, with 95% bootstrap confidence bands.</sub>
+</p>
+
+<p align="center">
+  <img src="assets/figures/pkuph-adverse-event-roc-pr.png" width="85%" alt="Adverse-event ROC and precision-recall curves in PKUPH">
+  <br>
+  <sub>Adverse-event discrimination at PKUPH, with 95% bootstrap confidence bands.</sub>
 </p>
 
 ## Model analysis
@@ -292,60 +304,109 @@ These local explanations are intended for audit and model inspection. They do no
 
 Complete aggregate tables and additional interpretation boundaries are available in [`RESULTS.md`](RESULTS.md).
 
+## Code
+
+### Installation
+
+```bash
+git clone https://github.com/ZhWenPrism/SepsisMOST.git
+cd SepsisMOST
+pip install -e .                  # or: pip install -r requirements.txt
+pip install -e ".[test]" && pytest  # optional: run the test suite
+```
+
+The code requires Python 3.9 or later and PyTorch 2.0 or later. It was developed with Python 3.12, PyTorch 2.13, NumPy 1.26 and pandas 2.2, and runs on CPU, CUDA and Apple MPS devices.
+
+### Inputs
+
+Training uses a temporal tensor with the competing-risks labels, a static matrix and a table of event onset times for the SOFAE graph. The arrays, shapes and label coding are specified in [`docs/DATA_FORMAT.md`](docs/DATA_FORMAT.md). The code that derives these files from the source databases is not included in this release.
+
+### Usage
+
+```bash
+# 1. Build and freeze the SOFAE graph from organ-failure and syndrome onset times
+python scripts/build/build_sofae_graph.py --onsets onsets.parquet --datetime --out runs/sofae_graph.npz
+
+# 2. Train Sepsis-MOST
+python scripts/train/train_sepsis_most.py \
+    --temporal tensors.npz --static static.npz --graph runs/sofae_graph.npz \
+    --config configs/model/sepsis_most.yaml --out runs/sepsis_most.pt
+
+# 3. Score a cohort with the frozen model, without refitting
+python scripts/predict/predict_sepsis_most.py --checkpoint runs/sepsis_most.pt \
+    --temporal external_tensors.npz --static external_static.npz --out runs/predictions.npz
+```
+
+Without `pip install`, prefix the commands with `PYTHONPATH=src`. The training script saves the checkpoint together with the row indices of the data split (`*.split.npz`) and a summary of the validation C-index for every epoch (`*.summary.json`). The frozen model can also be used from Python:
+
+```python
+from sepsis_most.training import SepsisMOSTEnsemble
+
+model = SepsisMOSTEnsemble.load("runs/sepsis_most.pt")
+pred = model.predict(X, S)   # pred["cif"]: (N, 6, 8) organ CIFs; pred["event_prob"]: (N, 3)
+```
+
+### Configuration
+
+All settings are read from [`configs/model/sepsis_most.yaml`](configs/model/sepsis_most.yaml).
+
+| Setting | Value |
+|:--|:--|
+| Hidden size, state size, static embedding | 96, 16, 64 |
+| TCN blocks | 3, dilations 1, 2, 4, kernel size 3 |
+| Organ experts | 6 two-layer networks, hidden size 128, top-2 gate |
+| Loss weights | λ<sub>syn</sub> 0.5, λ<sub>rank</sub> 0.15, λ<sub>lb</sub> 0.01, λ<sub>spec</sub> 0.2 |
+| Optimiser | AdamW, learning rate 2 × 10<sup>-3</sup>, weight decay 2 × 10<sup>-4</sup>, cosine schedule |
+| Training | batch size 256, up to 60 epochs, early stopping on the validation mean C-index (patience 10), input jitter 0.1 |
+| Data split | 70:15:15, stratified by ICU mortality, seed 42 |
+| Seeds | 42, 7 and 2024; one network per seed, predictions averaged |
+
+### Manuscript components and source files
+
+| Manuscript component | Source |
+|:--|:--|
+| SOFAE Graph Constructor (Eqs. 1–4) | [`src/sepsis_most/graph/`](src/sepsis_most/graph) |
+| Temporal Feature Extractor (Eqs. 5–7) | [`src/sepsis_most/model/encoders/`](src/sepsis_most/model/encoders) |
+| KG-MoE Predictor (Eqs. 8–13) | [`model/routing/`](src/sepsis_most/model/routing), [`model/experts/`](src/sepsis_most/model/experts), [`model/pooling.py`](src/sepsis_most/model/pooling.py) |
+| Organ coupling and prediction heads (Eqs. 14–17) | [`model/sepsis_most.py`](src/sepsis_most/model/sepsis_most.py), [`model/heads/`](src/sepsis_most/model/heads) |
+| Training objective (Eqs. 18–23) | [`src/sepsis_most/objectives/`](src/sepsis_most/objectives) |
+| Optimisation, model selection and inference | [`src/sepsis_most/training/`](src/sepsis_most/training), [`evaluation/discrimination/`](src/sepsis_most/evaluation/discrimination) |
+
 ## Repository
 
 ```text
 SepsisMOST/
-├── assets/figures/                 # manuscript architecture and result figures
-├── configs/
-│   ├── cohorts/                    # cohort and endpoint specifications
-│   ├── evaluation/                 # horizons, metrics and validation protocols
-│   └── model/                      # encoder, router and objective contracts
-├── results/tables/                 # aggregate non-patient-level results
+├── assets/figures/                 # manuscript figures
+├── configs/model/sepsis_most.yaml  # model, objective and optimisation settings
+├── docs/DATA_FORMAT.md             # specification of the input files
+├── results/tables/                 # aggregate, non-patient-level results
 ├── scripts/
-│   ├── build/                      # future cohort and graph construction
-│   ├── train/                      # future optimisation and calibration entry points
-│   └── evaluate/                   # future internal and external validation workflows
+│   ├── build/build_sofae_graph.py  # SOFAE graph construction
+│   ├── train/train_sepsis_most.py  # training
+│   └── predict/predict_sepsis_most.py  # scoring with a frozen model
 ├── src/sepsis_most/
-│   ├── clinical/
-│   │   ├── cohorts/                # cohort selection and split contracts
-│   │   ├── endpoints/              # organ and adverse-event definitions
-│   │   ├── features/               # temporal and static representations
-│   │   └── harmonization/          # cross-database variable alignment
-│   ├── graph/
-│   │   ├── relations/              # precedence, co-occurrence and trigger matrices
-│   │   ├── embedding/              # frozen spectral graph representation
-│   │   └── coupling/               # graph-derived organ interaction terms
-│   ├── model/
-│   │   ├── encoders/               # causal TCN and state-space modules
-│   │   ├── experts/                # organ-specialised expert networks
-│   │   ├── routing/                # graph-biased expert routing
-│   │   └── heads/                  # competing-risk and adverse-event heads
-│   ├── objectives/                 # likelihood, ranking and routing objectives
-│   ├── training/                   # optimisation, checkpoints and calibration
-│   ├── evaluation/
-│   │   ├── discrimination/         # C-index, time-dependent AUC and AUPRC
-│   │   ├── calibration/            # Brier score, ICI, slope and intercept
-│   │   ├── clinical_utility/       # future operating-point and net-benefit analysis
-│   │   └── external_validation/    # frozen-model cohort transfer
-│   └── interpretability/           # graph, expert and feature attribution
-├── tests/
-│   ├── unit/                       # module-level invariants
-│   ├── integration/                # tensor and output contracts
-│   └── statistical/                # metric and resampling checks
+│   ├── constants.py                # organs, adverse events, graph nodes, time bins
+│   ├── graph/                      # relations, spectral embedding, organ coupling
+│   ├── model/                      # encoders, experts, routing, heads, full network
+│   ├── objectives/                 # likelihood, cross entropy, ranking, balancing, specialisation
+│   ├── training/                   # configuration, data interface, trainer, frozen model
+│   └── evaluation/discrimination/  # concordance index for model selection
+├── tests/                          # unit and integration tests on synthetic data
+├── pyproject.toml
+├── requirements.txt
 ├── ARCHITECTURE.md
 ├── RESULTS.md
 └── README.md
 ```
 
-The hierarchy defines the intended boundaries of the future implementation. Clinical preprocessing, graph construction, temporal encoding, expert routing, competing-risk heads, calibration, external validation and interpretation are separated so that each component can be tested and audited independently. The empty directories currently preserve this release contract without exposing source implementation before the project is ready for code publication.
+The directories `src/sepsis_most/clinical/`, the remaining `src/sepsis_most/evaluation/` subdirectories, `src/sepsis_most/interpretability/`, `configs/cohorts/`, `configs/evaluation/` and `scripts/evaluate/` are reserved for the cohort, endpoint, feature construction, evaluation and interpretation code of subsequent releases.
 
-The public branch contains only manuscript-facing figures, aggregate result tables and documentation. It does not include raw ICU records, patient-level derivatives, protected health information, trained weights, checkpoints, credentials or private configuration. MIMIC-IV and eICU-CRD remain subject to PhysioNet credentialing and their respective data-use agreements, and the institutional cohort is not redistributed.
+The repository does not include raw ICU records, patient-level derivatives, protected health information, trained weights, checkpoints, credentials or private configuration. MIMIC-IV and eICU-CRD remain subject to PhysioNet credentialing and their respective data-use agreements, and the PKUPH cohort is not redistributed.
 
 ## Interpretation and validation boundaries
 
 This is a retrospective multicohort modelling study, not a prospective clinical trial. The reported results establish performance within the analysed datasets but do not establish clinical effectiveness, workflow benefit or patient-outcome improvement. Decision thresholds, alert burden, treatment response and prospective transportability require separate evaluation.
 
-Endpoint harmonisation is also imperfect across databases. In the institutional cohort, neurological failure uses an available disorder-of-consciousness proxy because structured GCS is not routinely recorded, and cardiovascular failure depends on reconstructed vasopressor exposure. These endpoints are not fully equivalent to their MIMIC-IV and eICU-CRD counterparts and should be interpreted as cohort-specific operationalisations.
+Endpoint harmonisation is also imperfect across databases. In the PKUPH cohort, numeric Glasgow Coma Scale scores were rarely recorded, so brain failure was not evaluated and MODS was counted over the other five organs. Cardiovascular failure at PKUPH depends on vasopressor rates reconstructed from order totals. These endpoints are not fully equivalent to their MIMIC-IV and eICU-CRD counterparts and should be interpreted as cohort-specific operationalisations.
 
 Sepsis-MOST is therefore presented as a research framework for organ-resolved prognosis, multicohort validation and model interpretation. It is not a medical device and is not intended for direct clinical decision-making in its current form.
