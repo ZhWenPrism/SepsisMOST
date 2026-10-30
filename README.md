@@ -96,21 +96,19 @@ For every organ, ICU death before organ failure is treated as a competing event.
 
 ## Research contributions
 
-1. **Organ-resolved multi-task prognosis** — one network produces six organ-specific risk trajectories and three adverse-event probabilities while retaining a separate head for every clinical endpoint.
-2. **Data-derived organ-event structure** — the SOFAE graph encodes temporal precedence, co-occurrence and syndrome-trigger relations learned from the development data rather than relying on handwritten interaction rules.
-3. **Graph-guided expert specialisation** — six organ experts preserve task identity, while graph-biased routing constructs a shared context from the experts most relevant to the current physiological state.
-4. **Competing-risk estimation** — ICU death before organ failure is modelled explicitly, yielding organ-specific cumulative-incidence outputs rather than conventional binary probabilities.
-5. **Hybrid temporal representation** — causal temporal convolutions capture local clinical change, and a selective state-space layer models longer dependencies across the onset-centred sequence.
-6. **Multicohort evaluation** — the frozen development model is evaluated in eICU-CRD and the independent PKUPH cohort without site-specific retraining or recalibration.
-7. **Task-level interpretation** — learned graph relations, component analyses and global and patient-level attribution views expose how the model organises shared and endpoint-specific information.
+1. **Organ-resolved multi-task prognosis**: one network produces six organ-specific risk trajectories and three adverse-event probabilities while retaining a separate head for every clinical endpoint.
+2. **Data-derived organ-event structure**: the SOFAE graph encodes temporal precedence, co-occurrence and syndrome-trigger relations learned from the development data rather than relying on handwritten interaction rules.
+3. **Graph-guided expert specialisation**: six organ experts preserve task identity, while graph-biased routing constructs a shared context from the experts most relevant to the current physiological state.
+4. **Competing-risk estimation**: ICU death before organ failure is modelled explicitly, yielding organ-specific cumulative-incidence outputs rather than conventional binary probabilities.
+5. **Hybrid temporal representation**: causal temporal convolutions capture local clinical change, and a selective state-space layer models longer dependencies across the onset-centred sequence.
+6. **Multicohort evaluation**: the frozen development model is evaluated in eICU-CRD and the independent PKUPH cohort without site-specific retraining or recalibration.
+7. **Task-level interpretation**: learned graph relations, component analyses and global and patient-level attribution views expose how the model organises shared and endpoint-specific information.
 
 ## Clinical scope
 
 The prediction space covers six organ systems routinely represented in sepsis severity assessment. Kidney failure is defined through renal dysfunction and renal-replacement criteria; respiratory failure through severe oxygenation impairment under ventilatory support; cardiovascular failure through advanced vasopressor or mechanical-support requirements; brain failure through severe impairment of consciousness; haemostatic failure through thrombocytopenia; and liver failure through marked hyperbilirubinaemia.
 
 The three adverse-event outputs represent clinically consequential states that often trigger escalation of care. Septic shock captures circulatory and metabolic deterioration, MODS represents concurrent failure of multiple organs, and ICU mortality provides a terminal outcome shared across the organ-specific competing-risk tasks. These outputs are estimated jointly but remain distinct, allowing performance and calibration to be assessed separately for each endpoint.
-
-The framework is intended for early risk stratification research. It does not prescribe treatment, replace clinician assessment or establish that an intervention based on its predictions improves patient outcomes. Prospective evaluation would be required before clinical use.
 
 <p align="center">
   <img src="assets/figures/clinical-scope.png" width="100%" alt="Clinical scope of Sepsis-MOST">
@@ -409,4 +407,4 @@ This is a retrospective multicohort modelling study, not a prospective clinical 
 
 Endpoint harmonisation is also imperfect across databases. In the PKUPH cohort, numeric Glasgow Coma Scale scores were rarely recorded, so brain failure was not evaluated and MODS was counted over the other five organ systems. Cardiovascular failure at PKUPH depends on vasopressor rates reconstructed from order totals. These endpoints are not fully equivalent to their MIMIC-IV and eICU-CRD counterparts and should be interpreted as cohort-specific operationalisations.
 
-Sepsis-MOST is therefore presented as a research framework for organ-resolved prognosis, multicohort validation and model interpretation. It is not a medical device and is not intended for direct clinical decision-making in its current form.
+Sepsis-MOST is therefore presented as a research framework for organ-resolved prognosis, multicohort validation and model interpretation.
