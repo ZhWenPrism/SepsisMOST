@@ -11,9 +11,15 @@ import numpy as np
 
 def isotonic_fit(x, y):
     """Pool-adjacent-violators fit; returns the sorted knots and fitted values."""
-    order = np.argsort(x)
-    xs, ys = x[order], y[order].astype(float)
-    vals, wts = list(ys), list(np.ones_like(ys))
+    x, y = np.asarray(x, dtype=float), np.asarray(y, dtype=float)
+    if x.ndim != 1 or y.shape != x.shape or not len(x):
+        raise ValueError("calibration inputs must be non-empty aligned vectors")
+    if not np.isfinite(x).all() or not np.isfinite(y).all():
+        raise ValueError("calibration inputs must be finite")
+    order = np.argsort(x, kind="stable")
+    xs, starts, counts = np.unique(x[order], return_index=True, return_counts=True)
+    ys = np.add.reduceat(y[order], starts) / counts
+    vals, wts = list(ys), list(counts.astype(float))
     blocks = [[i] for i in range(len(ys))]
     i = 0
     while i < len(vals) - 1:
