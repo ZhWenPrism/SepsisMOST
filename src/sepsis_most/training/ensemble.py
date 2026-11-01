@@ -82,7 +82,7 @@ class SepsisMOSTEnsemble:
 
     @classmethod
     def load(cls, path, device: str = "cpu") -> "SepsisMOSTEnsemble":
-        ck = torch.load(Path(path), map_location=device, weights_only=True)
+        ck = torch.load(Path(path), map_location="cpu", weights_only=True)
         if ck.get("format") != CHECKPOINT_FORMAT:
             raise ValueError(f"unsupported checkpoint format: {ck.get('format')}")
         cfg = TrainingConfig.from_dict(ck["config"])
