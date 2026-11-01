@@ -59,6 +59,14 @@ def load_cohort(temporal_path, static_path) -> CohortTensors:
 
 def stratified_split(death, seed: int = 42, fractions=(0.70, 0.15, 0.15)):
     """Random split into training, validation and internal test rows, stratified by ICU death."""
+    death = np.asarray(death)
+    if death.ndim != 1 or not np.isin(death, (0, 1)).all():
+        raise ValueError("death must be a one-dimensional binary outcome vector")
+    fractions = np.asarray(fractions, dtype=float)
+    if (fractions.shape != (3,) or not np.isfinite(fractions).all()
+            or (fractions < 0).any() or (fractions > 1).any()
+            or not np.isclose(fractions.sum(), 1.0, rtol=0, atol=1e-8)):
+        raise ValueError("split fractions must be three non-negative values summing to one")
     rng = np.random.default_rng(seed)
     idx = np.arange(len(death))
     cut_train, cut_val = fractions[0], round(fractions[0] + fractions[1], 10)
@@ -70,7 +78,7 @@ def stratified_split(death, seed: int = 42, fractions=(0.70, 0.15, 0.15)):
         tr += list(c[:n1])
         va += list(c[n1:n2])
         te += list(c[n2:])
-    return np.array(tr), np.array(va), np.array(te)
+    return np.array(tr, dtype=np.int64), np.array(va, dtype=np.int64), np.array(te, dtype=np.int64)
 
 
 @dataclass
