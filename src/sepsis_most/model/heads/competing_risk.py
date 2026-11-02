@@ -16,8 +16,9 @@ import torch.nn.functional as F
 
 def cr_decode(logits):
     """logits (*, K, 3) -> state probabilities, log P(survive bin), log S before bin."""
-    pr = F.softmax(logits, dim=-1)                                  # [fail, death, survive]
-    logs = torch.log(pr[..., 2].clamp(1e-6, 1 - 1e-6))             # log survival in each bin
+    log_pr = F.log_softmax(logits, dim=-1)
+    pr = log_pr.exp()                                          # [fail, death, survive]
+    logs = log_pr[..., 2]                                      # log survival in each bin
     pre = torch.cat([torch.zeros_like(logs[..., :1]),
                      torch.cumsum(logs, -1)[..., :-1]], -1)         # log survival before each bin
     return pr, logs, pre

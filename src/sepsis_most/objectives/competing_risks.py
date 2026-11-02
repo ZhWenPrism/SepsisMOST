@@ -12,6 +12,7 @@ Patients not at risk for the organ at the time of prediction are masked.
 from __future__ import annotations
 
 import torch
+import torch.nn.functional as F
 
 from ..model.heads import cr_decode
 
@@ -24,11 +25,12 @@ def cr_nll(logits, cause, ebin, atrisk):
     m = atrisk.bool()
     if m.sum() == 0:
         return logits.sum() * 0.0
-    pr, logs, pre = cr_decode(logits[m])
+    _, logs, pre = cr_decode(logits[m])
+    log_pr = F.log_softmax(logits[m], dim=-1)
     cz, bz = cause[m], ebin[m]
     ar = torch.arange(int(m.sum()), device=logits.device)
     ev = cz >= 0
     ll = pre[ar, bz].clone()                                   # survived up to the event bin
-    ll = torch.where(ev, ll + torch.log(pr[ar, bz, cz.clamp(min=0)].clamp_min(1e-8)),
+    ll = torch.where(ev, ll + log_pr[ar, bz, cz.clamp(min=0)],
                      pre[ar, bz] + logs[ar, bz])               # censored: survived the last bin
     return -ll.mean()
