@@ -37,24 +37,45 @@ class CohortTensors:
 
 def load_cohort(temporal_path, static_path) -> CohortTensors:
     """Load the temporal tensor with labels and the static matrix."""
-    z = np.load(Path(temporal_path), allow_pickle=False)
-    s = np.load(Path(static_path), allow_pickle=False)
-    missing = [k for k in ("X", "bin_edges") + TEMPORAL_LABEL_KEYS if k not in z.files]
-    if missing or "S" not in s.files:
-        raise KeyError(f"missing arrays: {missing + ([] if 'S' in s.files else ['S'])}")
-    if "stay_id" in z.files and "stay_id" in s.files:
-        if not np.array_equal(z["stay_id"], s["stay_id"]):
-            raise ValueError("temporal and static files are not aligned by row")
-    X, S = z["X"].astype(np.float32), s["S"].astype(np.float32)
-    if len(X) != len(S):
-        raise ValueError("temporal and static files have different numbers of rows")
-    return CohortTensors(
-        X=X, S=S,
-        atrisk=z["atrisk"].astype(np.int64), cause=z["cause"].astype(np.int64),
-        ebin=z["ebin"].astype(np.int64), evt=z["evt"].astype(np.int64),
-        etime=z["etime"].astype(np.float32),
-        events=np.stack([z["death_h"], z["shock_h"], z["mods_h"]], 1).astype(np.int64),
-        bin_edges=z["bin_edges"].astype(float))
+    with np.load(Path(temporal_path), allow_pickle=False) as z, np.load(Path(static_path), allow_pickle=False) as s:
+        missing = [k for k in ("X", "bin_edges") + TEMPORAL_LABEL_KEYS if k not in z.files]
+        if missing or "S" not in s.files:
+            raise KeyError(f"missing arrays: {missing + ([] if 'S' in s.files else ['S'])}")
+        X, S = z["X"].astype(np.float32), s["S"].astype(np.float32)
+        if X.ndim != 3 or S.ndim != 2 or not X.size or not S.size:
+            raise ValueError("X and S must be non-empty temporal and static matrices")
+        n = len(X)
+        if n != len(S):
+            raise ValueError("temporal and static files have different numbers of rows")
+        if "stay_id" in z.files and "stay_id" in s.files:
+            if z["stay_id"].shape != (n,) or s["stay_id"].shape != (n,):
+                raise ValueError("stay_id must have one entry per row")
+            if not np.array_equal(z["stay_id"], s["stay_id"]):
+                raise ValueError("temporal and static files are not aligned by row")
+        edges = z["bin_edges"].astype(float)
+        if (edges.ndim != 1 or not edges.size or not np.isfinite(edges).all()
+                or (edges <= 0).any() or (np.diff(edges) <= 0).any()):
+            raise ValueError("bin_edges must be finite, positive and strictly increasing")
+        for key in TEMPORAL_LABEL_KEYS:
+            values = z[key]
+            expected = (n,) if key in ("death_h", "shock_h", "mods_h") else (n, 6)
+            if values.shape != expected:
+                raise ValueError(f"{key} must have shape {expected}")
+            if key == "etime":
+                continue
+            if key == "ebin":
+                valid = np.isin(values, np.arange(len(edges))).all()
+            else:
+                valid = np.isin(values, (-1, 0, 1) if key == "cause" else (0, 1)).all()
+            if not valid:
+                raise ValueError(f"{key} contains invalid label codes")
+        return CohortTensors(
+            X=X, S=S,
+            atrisk=z["atrisk"].astype(np.int64), cause=z["cause"].astype(np.int64),
+            ebin=z["ebin"].astype(np.int64), evt=z["evt"].astype(np.int64),
+            etime=z["etime"].astype(np.float32),
+            events=np.stack([z["death_h"], z["shock_h"], z["mods_h"]], 1).astype(np.int64),
+            bin_edges=edges)
 
 
 def stratified_split(death, seed: int = 42, fractions=(0.70, 0.15, 0.15)):
