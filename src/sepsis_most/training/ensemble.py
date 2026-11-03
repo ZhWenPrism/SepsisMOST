@@ -61,14 +61,14 @@ class SepsisMOSTEnsemble:
                 out["cif_7d_calibrated"] = np.empty((0, N_ORGANS), dtype=float)
             return out
         Xn, Sn = self.standardiser.transform_for_scoring(X, S)
-        Xt = torch.tensor(Xn, dtype=torch.float32, device=device)
-        St = torch.tensor(Sn, dtype=torch.float32, device=device)
         cifs, probs = [], []
         for model in self.members:
             model.to(device).eval()
             c_all, p_all = [], []
-            for a in range(0, len(Xt), batch_size):
-                c, p = model.predict(Xt[a:a + batch_size], St[a:a + batch_size])
+            for a in range(0, len(Xn), batch_size):
+                xb = torch.as_tensor(Xn[a:a + batch_size], dtype=torch.float32, device=device)
+                sb = torch.as_tensor(Sn[a:a + batch_size], dtype=torch.float32, device=device)
+                c, p = model.predict(xb, sb)
                 c_all.append(c.cpu().numpy())
                 p_all.append(p.cpu().numpy())
             cifs.append(np.concatenate(c_all))
