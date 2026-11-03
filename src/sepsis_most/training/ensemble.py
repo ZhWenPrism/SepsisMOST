@@ -8,11 +8,13 @@ Python values and can be loaded with ``torch.load(weights_only=True)``.
 from __future__ import annotations
 
 from pathlib import Path
+from numbers import Integral
 from typing import Optional
 
 import numpy as np
 import torch
 
+from ..constants import N_ORGANS, ADVERSE_EVENTS
 from .calibration import isotonic_apply
 from .config import TrainingConfig
 from .data import Standardiser
@@ -25,6 +27,8 @@ class SepsisMOSTEnsemble:
     def __init__(self, members, standardiser: Standardiser, organ_embeddings, coupling,
                  bin_edges, config: TrainingConfig, isotonic: Optional[list] = None):
         self.members = list(members)
+        if not self.members:
+            raise ValueError("the ensemble must contain at least one member")
         self.standardiser = standardiser
         self.organ_embeddings = np.asarray(organ_embeddings, dtype=np.float32)
         self.coupling = np.asarray(coupling, dtype=np.float32)
@@ -42,8 +46,21 @@ class SepsisMOSTEnsemble:
         ``calibrated=True`` and fitted isotonic maps, ``cif_7d_calibrated``
         (N, 6) is added.
         """
-        Xn, Sn = self.standardiser.transform_for_scoring(np.asarray(X, np.float32),
-                                                         np.asarray(S, np.float32))
+        if isinstance(batch_size, (bool, np.bool_)) or not isinstance(batch_size, Integral) or batch_size < 1:
+            raise ValueError("batch_size must be a positive integer")
+        X, S = np.asarray(X, np.float32), np.asarray(S, np.float32)
+        if (X.ndim != 3 or S.ndim != 2 or len(X) != len(S) or not X.shape[1]
+                or X.shape[2] != len(self.standardiser.mu) or S.shape[1] != len(self.standardiser.smu)):
+            raise ValueError("inputs must be aligned temporal and static matrices with the fitted feature widths")
+        if calibrated and self.isotonic is None:
+            raise ValueError("no isotonic maps were fitted for this model")
+        if not len(X):
+            out = {"cif": np.empty((0, N_ORGANS, len(self.bin_edges)), dtype=np.float32),
+                   "event_prob": np.empty((0, len(ADVERSE_EVENTS)), dtype=np.float32)}
+            if calibrated:
+                out["cif_7d_calibrated"] = np.empty((0, N_ORGANS), dtype=float)
+            return out
+        Xn, Sn = self.standardiser.transform_for_scoring(X, S)
         Xt = torch.tensor(Xn, dtype=torch.float32, device=device)
         St = torch.tensor(Sn, dtype=torch.float32, device=device)
         cifs, probs = [], []
@@ -58,8 +75,6 @@ class SepsisMOSTEnsemble:
             probs.append(np.concatenate(p_all))
         out = {"cif": np.mean(cifs, 0), "event_prob": np.mean(probs, 0)}
         if calibrated:
-            if self.isotonic is None:
-                raise ValueError("no isotonic maps were fitted for this model")
             out["cif_7d_calibrated"] = np.stack(
                 [isotonic_apply(kx, ky, out["cif"][:, k, -1]) for k, (kx, ky) in enumerate(self.isotonic)], 1)
         return out
