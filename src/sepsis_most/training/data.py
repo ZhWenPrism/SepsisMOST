@@ -78,6 +78,27 @@ def load_cohort(temporal_path, static_path) -> CohortTensors:
             bin_edges=edges)
 
 
+def validate_split_indices(n_rows, train, val, test=None):
+    """Validate disjoint row partitions; a supplied test partition requires full coverage."""
+    parts = {"train": train, "val": val}
+    if test is not None:
+        parts["test"] = test
+    clean = []
+    for name, values in parts.items():
+        ids = np.asarray(values)
+        if ids.ndim != 1 or (not ids.size and name != "test"):
+            raise ValueError(f"split {name} must be a non-empty one-dimensional index array")
+        if ids.size and (ids.dtype.kind not in "iu" or (ids < 0).any() or (ids >= n_rows).any()):
+            raise ValueError(f"split {name} must contain integer row indices in [0, {n_rows})")
+        clean.append(ids.astype(np.int64))
+    combined = np.concatenate(clean)
+    if len(np.unique(combined)) != len(combined):
+        raise ValueError("split partitions contain duplicate or overlapping row indices")
+    if test is not None and len(combined) != n_rows:
+        raise ValueError("split partitions must cover every cohort row exactly once")
+    return tuple(clean)
+
+
 def stratified_split(death, seed: int = 42, fractions=(0.70, 0.15, 0.15)):
     """Random split into training, validation and internal test rows, stratified by ICU death."""
     death = np.asarray(death)

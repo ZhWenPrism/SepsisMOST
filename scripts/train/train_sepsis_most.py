@@ -24,7 +24,7 @@ import numpy as np
 from sepsis_most.constants import ORGANS
 from sepsis_most.graph import SOFAEGraph
 from sepsis_most.training import (SepsisMOSTEnsemble, Standardiser, TrainingConfig, isotonic_fit,
-                                  load_cohort, resolve_device, stratified_split, train_network)
+                                  load_cohort, resolve_device, stratified_split, train_network, validate_split_indices)
 
 
 def main() -> None:
@@ -44,10 +44,11 @@ def main() -> None:
     device = resolve_device(args.device)
     data = load_cohort(args.temporal, args.static)
     if args.split_file:
-        sp = np.load(args.split_file, allow_pickle=False)
-        tr, va, te = sp["train"], sp["val"], sp["test"]
+        with np.load(args.split_file, allow_pickle=False) as sp:
+            tr, va, te = sp["train"], sp["val"], sp["test"]
     else:
         tr, va, te = stratified_split(data.events[:, 0], cfg.data.split_seed, cfg.data.split_fractions)
+    tr, va, te = validate_split_indices(len(data.X), tr, va, te)
     print(f"device {device} | rows {len(data.X):,} | train/val/test {len(tr):,}/{len(va):,}/{len(te):,}")
 
     std = Standardiser.fit(data.X, data.S, tr, cfg.data.n_raw_channels)

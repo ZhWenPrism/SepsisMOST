@@ -18,7 +18,7 @@ from ..model import SepsisMOST, cumulative_incidence
 from ..objectives import joint_objective
 from .augment import jitter
 from .config import TrainingConfig
-from .data import CohortTensors
+from .data import CohortTensors, validate_split_indices
 
 
 def resolve_device(name: str = "auto") -> torch.device:
@@ -53,6 +53,7 @@ def train_network(seed: int, Xn: np.ndarray, Sn: np.ndarray, data: CohortTensors
     ``val_idx`` for model selection. Returns the model restored to its best
     validation epoch, the best validation mean C-index and the per-epoch history.
     """
+    train_idx, val_idx = validate_split_indices(len(Xn), train_idx, val_idx)
     oc = cfg.optimisation
     torch.manual_seed(seed)
     rng = np.random.default_rng(seed)
@@ -106,6 +107,8 @@ def train_network(seed: int, Xn: np.ndarray, Sn: np.ndarray, data: CohortTensors
         cv = np.concatenate(cv)
         vc = mean_cause_specific_cindex(cv, data.etime[val_idx], data.evt[val_idx],
                                         data.atrisk[val_idx])
+        if not np.isfinite(vc):
+            raise ValueError("validation mean C-index is not finite; model selection requires comparable event pairs")
         history.append(vc)
         if log:
             log(f"seed {seed} epoch {epoch:2d} validation mean C-index {vc:.4f}")
@@ -116,7 +119,8 @@ def train_network(seed: int, Xn: np.ndarray, Sn: np.ndarray, data: CohortTensors
             bad += 1
             if bad >= oc.patience:
                 break
-    if best_state is not None:
-        model.load_state_dict(best_state)
+    if best_state is None:
+        raise ValueError("training did not select a valid validation epoch")
+    model.load_state_dict(best_state)
     model.eval()
     return model, best, history
