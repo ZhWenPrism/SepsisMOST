@@ -18,7 +18,7 @@ from ..model import SepsisMOST, cumulative_incidence
 from ..objectives import joint_objective
 from .augment import jitter
 from .config import TrainingConfig
-from .data import CohortTensors
+from .data import CohortTensors, validate_split_indices
 
 
 def resolve_device(name: str = "auto") -> torch.device:
@@ -53,6 +53,7 @@ def train_network(seed: int, Xn: np.ndarray, Sn: np.ndarray, data: CohortTensors
     ``val_idx`` for model selection. Returns the model restored to its best
     validation epoch, the best validation mean C-index and the per-epoch history.
     """
+    train_idx, val_idx = validate_split_indices(len(Xn), train_idx, val_idx)
     oc = cfg.optimisation
     torch.manual_seed(seed)
     rng = np.random.default_rng(seed)
