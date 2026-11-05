@@ -4,6 +4,7 @@ The defaults reproduce ``configs/model/sepsis_most.yaml``.
 """
 from __future__ import annotations
 
+from collections.abc import Mapping
 from dataclasses import asdict, dataclass, field, fields
 from pathlib import Path
 
@@ -55,9 +56,15 @@ class TrainingConfig:
     seeds: tuple = (42, 7, 2024)
 
     @classmethod
-    def from_dict(cls, d: dict) -> "TrainingConfig":
+    def from_dict(cls, d: Mapping) -> "TrainingConfig":
+        if not isinstance(d, Mapping):
+            raise ValueError("training configuration must be a mapping")
+
         def build(kind, values):
-            values = dict(values or {})
+            if values is None:
+                values = {}
+            if not isinstance(values, Mapping):
+                raise ValueError(f"{kind.__name__} configuration must be a mapping")
             unknown = set(values) - {f.name for f in fields(kind)}
             if unknown:
                 raise ValueError(f"unknown {kind.__name__} keys: {sorted(unknown)}")
@@ -78,7 +85,8 @@ class TrainingConfig:
     def from_yaml(cls, path) -> "TrainingConfig":
         import yaml
         with open(Path(path), encoding="utf-8") as f:
-            return cls.from_dict(yaml.safe_load(f) or {})
+            data = yaml.safe_load(f)
+        return cls.from_dict({} if data is None else data)
 
     def to_dict(self) -> dict:
         def plain(v):
