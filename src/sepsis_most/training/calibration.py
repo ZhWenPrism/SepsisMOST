@@ -19,24 +19,18 @@ def isotonic_fit(x, y):
     order = np.argsort(x, kind="stable")
     xs, starts, counts = np.unique(x[order], return_index=True, return_counts=True)
     ys = np.add.reduceat(y[order], starts) / counts
-    vals, wts = list(ys), list(counts.astype(float))
-    blocks = [[i] for i in range(len(ys))]
-    i = 0
-    while i < len(vals) - 1:
-        if vals[i] > vals[i + 1] + 1e-12:              # merge violating neighbours
-            vals[i] = (vals[i] * wts[i] + vals[i + 1] * wts[i + 1]) / (wts[i] + wts[i + 1])
-            wts[i] += wts[i + 1]
-            blocks[i] += blocks[i + 1]
-            del vals[i + 1]
-            del wts[i + 1]
-            del blocks[i + 1]
-            if i > 0:
-                i -= 1
-        else:
-            i += 1
+    blocks = []
+    for index, (value, weight) in enumerate(zip(ys, counts)):
+        blocks.append((index, index + 1, float(value), float(weight)))
+        while len(blocks) > 1 and blocks[-2][2] > blocks[-1][2] + 1e-12:
+            right = blocks.pop()
+            left = blocks.pop()
+            weight = left[3] + right[3]
+            value = (left[2] * left[3] + right[2] * right[3]) / weight
+            blocks.append((left[0], right[1], value, weight))
     fitted = np.zeros(len(ys))
-    for v, blk in zip(vals, blocks):
-        fitted[blk] = v
+    for start, stop, value, _ in blocks:
+        fitted[start:stop] = value
     return xs, fitted
 
 
