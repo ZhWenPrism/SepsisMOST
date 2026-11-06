@@ -40,7 +40,7 @@ class KGMoE(nn.Module):
         topv, topi = probs.topk(self.top_k, dim=-1)
         topv = topv / (topv.sum(-1, keepdim=True) + 1e-9)              # Eq. 10
         ex = torch.stack([e(h) for e in self.experts], dim=2)          # (B, T, E, D), Eq. 11
-        gate_full = torch.zeros(B, T, self.n_experts, device=x.device)
+        gate_full = torch.zeros_like(probs)
         gate_full.scatter_(-1, topi, topv)
         shared = x + (ex * gate_full.unsqueeze(-1)).sum(2)             # U, Eq. 12
         imp = probs.mean(dim=(0, 1))

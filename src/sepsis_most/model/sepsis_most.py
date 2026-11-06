@@ -55,8 +55,8 @@ class SepsisMOST(nn.Module):
         self.pool_shared = AttentionPooling(d_model)
         self.pool_expert = nn.ModuleList([AttentionPooling(d_model) for _ in range(N_ORGANS)])
         # frozen SOFAE graph: organ embeddings (router) and coupling matrix
-        self.register_buffer("graph_organ_emb", torch.as_tensor(organ_embeddings, dtype=torch.float32))
-        self.register_buffer("graph_coupling", torch.as_tensor(coupling, dtype=torch.float32))
+        self.register_buffer("graph_organ_emb", torch.as_tensor(organ_embeddings, dtype=torch.float32).clone())
+        self.register_buffer("graph_coupling", torch.as_tensor(coupling, dtype=torch.float32).clone())
         self.coupling_lambda = nn.Parameter(torch.zeros(N_ORGANS))   # lambda_k = softplus(.) >= 0
         # static branch
         self.static_net = nn.Sequential(

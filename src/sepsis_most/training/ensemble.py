@@ -29,12 +29,14 @@ class SepsisMOSTEnsemble:
         self.members = list(members)
         if not self.members:
             raise ValueError("the ensemble must contain at least one member")
-        self.standardiser = standardiser
-        self.organ_embeddings = np.asarray(organ_embeddings, dtype=np.float32)
-        self.coupling = np.asarray(coupling, dtype=np.float32)
-        self.bin_edges = np.asarray(bin_edges, dtype=float)
-        self.config = config
-        self.isotonic = isotonic            # optional per-organ (knots_x, knots_y)
+        self.standardiser = Standardiser(**{
+            name: np.array(getattr(standardiser, name), copy=True) for name in ("mu", "sd", "smu", "ssd")})
+        self.organ_embeddings = np.array(organ_embeddings, dtype=np.float32, copy=True)
+        self.coupling = np.array(coupling, dtype=np.float32, copy=True)
+        self.bin_edges = np.array(bin_edges, dtype=float, copy=True)
+        self.config = TrainingConfig.from_dict(config.to_dict())
+        self.isotonic = None if isotonic is None else [
+            (np.array(x, copy=True), np.array(y, copy=True)) for x, y in isotonic]
 
     @torch.no_grad()
     def predict(self, X, S, batch_size: int = 512, device: str = "cpu", calibrated: bool = False):
