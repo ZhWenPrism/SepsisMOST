@@ -26,7 +26,10 @@ def ranking_loss(cif_h, etime, evt, atrisk, sigma: float = 0.1):
         ei = torch.where(e)[0]
         ri, ti = r[ei].unsqueeze(1), t[ei].unsqueeze(1)
         rj, tj = r[m].unsqueeze(0), t[m].unsqueeze(0)
-        A = (tj > ti).float()                                  # comparable pairs
-        loss = loss + (torch.exp(-(ri - rj) / sigma) * A).sum() / A.sum().clamp(min=1)
+        comparable = tj > ti
+        diff = (ri - rj)[comparable]
+        pair_loss = torch.exp(-diff / sigma)
+        numerator = pair_loss.sum(dtype=torch.promote_types(diff.dtype, torch.float32))
+        loss = loss + numerator / comparable.sum().clamp(min=1)
         cnt += 1
     return loss / max(cnt, 1)
