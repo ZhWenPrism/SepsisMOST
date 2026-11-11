@@ -60,7 +60,7 @@ def _hours_between(t_a: pd.Series, t_b: pd.Series) -> pd.Series:
     """Signed time from a to b in hours (datetime or numeric hour columns)."""
     if pd.api.types.is_datetime64_any_dtype(t_a):
         return (t_b - t_a).dt.total_seconds() / 3600.0
-    return t_b - t_a
+    return t_b.astype(float) - t_a.astype(float)
 
 
 def relation_matrices(onsets: pd.DataFrame) -> RelationMatrices:
