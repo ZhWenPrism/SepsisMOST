@@ -9,6 +9,8 @@ produces has a stable scale.
 """
 from __future__ import annotations
 
+from numbers import Integral
+
 import numpy as np
 
 from ..relations import RelationMatrices
@@ -22,6 +24,8 @@ def stacked_relations(relations: RelationMatrices) -> np.ndarray:
 
 def spectral_embeddings(relations: RelationMatrices, dim: int = 8):
     """Return the l2-normalised node embeddings (N x dim) and all singular values."""
+    if isinstance(dim, bool) or not isinstance(dim, Integral) or dim <= 0:
+        raise ValueError("dim must be a positive integer")
     m = stacked_relations(relations)
     u, sv, _ = np.linalg.svd(m, full_matrices=False)
     k = min(dim, m.shape[0])
