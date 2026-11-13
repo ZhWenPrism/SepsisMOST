@@ -17,7 +17,7 @@ All arrays are NumPy arrays stored in `.npz` files. Rows of the temporal and sta
 | `death_h`, `shock_h`, `mods_h` | (N,) | int | 1 if ICU death, septic shock or MODS occurred within 7 days of the time of prediction. |
 | `bin_edges` | (K,) | float | Right-closed bin edges in hours: 12, 24, 48, 72, 96, 120, 144, 168. |
 
-An optional integer array `stay_id` may be stored in both the temporal and the static file; when present, the training code checks that the rows are aligned.
+An optional integer array `stay_id` may be stored in both the temporal and the static file; when present in both files, the training and scoring commands check that the rows are aligned.
 
 ## Static matrix (`--static`)
 
