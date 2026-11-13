@@ -7,6 +7,7 @@ the validation, internal test and external data.
 from __future__ import annotations
 
 from dataclasses import dataclass
+from numbers import Integral
 from pathlib import Path
 
 import numpy as np
@@ -153,6 +154,9 @@ class Standardiser:
 
     @classmethod
     def fit(cls, X, S, train_idx, n_raw: int = N_RAW_CHANNELS) -> "Standardiser":
+        if (isinstance(n_raw, (bool, np.bool_)) or not isinstance(n_raw, Integral)
+                or not 0 <= n_raw <= X.shape[-1]):
+            raise ValueError("n_raw must be an integer between zero and the temporal feature count")
         flat = X[train_idx].reshape(-1, X.shape[-1])
         mu = flat.mean(0)
         sd = flat.std(0) + 1e-6
