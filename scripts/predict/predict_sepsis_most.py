@@ -14,6 +14,7 @@ from pathlib import Path
 import numpy as np
 
 from sepsis_most.training import SepsisMOSTEnsemble
+from sepsis_most.training.data import load_scoring_inputs
 
 
 def main() -> None:
@@ -26,9 +27,8 @@ def main() -> None:
     ap.add_argument("--calibrated", action="store_true", help="add isotonic-calibrated 7-day CIFs")
     args = ap.parse_args()
 
+    X, S = load_scoring_inputs(args.temporal, args.static)
     ens = SepsisMOSTEnsemble.load(args.checkpoint, device=args.device)
-    X = np.load(args.temporal, allow_pickle=False)["X"]
-    S = np.load(args.static, allow_pickle=False)["S"]
     pred = ens.predict(X, S, device=args.device, calibrated=args.calibrated)
     Path(args.out).parent.mkdir(parents=True, exist_ok=True)
     np.savez_compressed(args.out, bin_edges=ens.bin_edges, **pred)

@@ -6,6 +6,7 @@ from __future__ import annotations
 
 from collections.abc import Mapping
 from dataclasses import asdict, dataclass, field, fields
+from numbers import Integral
 from pathlib import Path
 
 from ..objectives import LossWeights
@@ -74,12 +75,19 @@ class TrainingConfig:
         unknown = set(d) - {f.name for f in fields(cls)}
         if unknown:
             raise ValueError(f"unknown configuration sections: {sorted(unknown)}")
+        seeds = d.get("seeds", cls.seeds)
+        if (not isinstance(seeds, (list, tuple)) or not seeds
+                or any(isinstance(seed, bool) or not isinstance(seed, Integral)
+                       or not 0 <= seed < 2 ** 64 for seed in seeds)):
+            raise ValueError("seeds must be a non-empty list of non-negative integer seeds below 2**64")
+        if len(set(seeds)) != len(seeds):
+            raise ValueError("seeds must be unique")
         return cls(model=build(ModelConfig, d.get("model")),
                    loss=build(LossWeights, d.get("loss")),
                    optimisation=build(OptimConfig, d.get("optimisation")),
                    augmentation=build(AugmentConfig, d.get("augmentation")),
                    data=build(DataConfig, d.get("data")),
-                   seeds=tuple(d.get("seeds", cls.seeds)))
+                   seeds=tuple(map(int, seeds)))
 
     @classmethod
     def from_yaml(cls, path) -> "TrainingConfig":

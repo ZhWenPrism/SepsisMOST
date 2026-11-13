@@ -7,6 +7,7 @@ the validation, internal test and external data.
 from __future__ import annotations
 
 from dataclasses import dataclass
+from numbers import Integral
 from pathlib import Path
 
 import numpy as np
@@ -35,6 +36,25 @@ class CohortTensors:
         return int(len(self.bin_edges))
 
 
+def _check_stay_alignment(temporal, static, n: int) -> None:
+    if "stay_id" in temporal.files and "stay_id" in static.files:
+        left, right = temporal["stay_id"], static["stay_id"]
+        if left.shape != (n,) or right.shape != (n,):
+            raise ValueError("stay_id must have one entry per row")
+        if not np.array_equal(left, right):
+            raise ValueError("temporal and static files are not aligned by row")
+
+
+def load_scoring_inputs(temporal_path, static_path) -> tuple[np.ndarray, np.ndarray]:
+    """Read temporal and static features without requiring outcome labels."""
+    with np.load(Path(temporal_path), allow_pickle=False) as temporal, np.load(Path(static_path), allow_pickle=False) as static:
+        X, S = temporal["X"], static["S"]
+        if X.ndim != 3 or S.ndim != 2 or len(X) != len(S):
+            raise ValueError("temporal and static features must have aligned rows")
+        _check_stay_alignment(temporal, static, len(X))
+    return X, S
+
+
 def load_cohort(temporal_path, static_path) -> CohortTensors:
     """Load the temporal tensor with labels and the static matrix."""
     with np.load(Path(temporal_path), allow_pickle=False) as z, np.load(Path(static_path), allow_pickle=False) as s:
@@ -47,11 +67,7 @@ def load_cohort(temporal_path, static_path) -> CohortTensors:
         n = len(X)
         if n != len(S):
             raise ValueError("temporal and static files have different numbers of rows")
-        if "stay_id" in z.files and "stay_id" in s.files:
-            if z["stay_id"].shape != (n,) or s["stay_id"].shape != (n,):
-                raise ValueError("stay_id must have one entry per row")
-            if not np.array_equal(z["stay_id"], s["stay_id"]):
-                raise ValueError("temporal and static files are not aligned by row")
+        _check_stay_alignment(z, s, n)
         edges = z["bin_edges"].astype(float)
         if (edges.ndim != 1 or not edges.size or not np.isfinite(edges).all()
                 or (edges <= 0).any() or (np.diff(edges) <= 0).any()):
@@ -138,6 +154,9 @@ class Standardiser:
 
     @classmethod
     def fit(cls, X, S, train_idx, n_raw: int = N_RAW_CHANNELS) -> "Standardiser":
+        if (isinstance(n_raw, (bool, np.bool_)) or not isinstance(n_raw, Integral)
+                or not 0 <= n_raw <= X.shape[-1]):
+            raise ValueError("n_raw must be an integer between zero and the temporal feature count")
         flat = X[train_idx].reshape(-1, X.shape[-1])
         mu = flat.mean(0)
         sd = flat.std(0) + 1e-6
