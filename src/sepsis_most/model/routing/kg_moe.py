@@ -14,6 +14,8 @@ p_e its mean routing probability.
 """
 from __future__ import annotations
 
+from numbers import Integral
+
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
@@ -25,7 +27,11 @@ class KGMoE(nn.Module):
     def __init__(self, d_model: int, graph_dim: int, n_experts: int = 6, top_k: int = 2,
                  d_hidden: int = 128, dropout: float = 0.1):
         super().__init__()
-        self.n_experts, self.top_k = n_experts, top_k
+        if isinstance(n_experts, bool) or not isinstance(n_experts, Integral) or n_experts < 1:
+            raise ValueError("n_experts must be a positive integer")
+        if isinstance(top_k, bool) or not isinstance(top_k, Integral) or not 1 <= top_k <= n_experts:
+            raise ValueError("top_k must be an integer in [1, n_experts]")
+        self.n_experts, self.top_k = int(n_experts), int(top_k)
         self.experts = organ_experts(n_experts, d_model, d_hidden, dropout)
         self.gate = nn.Linear(d_model, n_experts)                     # data signal W_g
         self.kg_gate = nn.Linear(graph_dim, n_experts, bias=False)    # graph signal W_kg
