@@ -15,6 +15,7 @@ The number of supporting patients is stored with every entry.
 from __future__ import annotations
 
 from dataclasses import dataclass
+from numbers import Integral
 
 import numpy as np
 import pandas as pd
@@ -125,6 +126,8 @@ def relation_matrices(onsets: pd.DataFrame) -> RelationMatrices:
 
 def prune(relations: RelationMatrices, min_support: int = 50) -> RelationMatrices:
     """Set to zero every edge supported by fewer than ``min_support`` patients."""
+    if isinstance(min_support, (bool, np.bool_)) or not isinstance(min_support, Integral) or min_support < 0:
+        raise ValueError("min_support must be a non-negative integer")
     def keep(r, s):
         return r * (s >= min_support)
 
