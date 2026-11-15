@@ -15,6 +15,7 @@ The number of supporting patients is stored with every entry.
 from __future__ import annotations
 
 from dataclasses import dataclass
+from numbers import Integral
 
 import numpy as np
 import pandas as pd
@@ -39,6 +40,22 @@ class RelationMatrices:
     counts: np.ndarray                # (9,) patients in whom each node occurred
 
 
+def _onset_values(onsets: pd.DataFrame, columns: tuple[str, ...]) -> tuple[np.ndarray, bool]:
+    times = onsets[list(columns)]
+    datetime = [pd.api.types.is_datetime64_any_dtype(times[c]) for c in columns]
+    if all(datetime):
+        return np.stack([times[c].to_numpy(dtype="datetime64[ns]") for c in columns], axis=1), True
+    if any(datetime):
+        raise ValueError("onset columns must all be datetime values or all numeric hours")
+    try:
+        values = times.to_numpy(dtype=float, na_value=np.nan)
+    except (TypeError, ValueError) as exc:
+        raise ValueError("onset columns must contain datetime values or numeric hours") from exc
+    if np.isinf(values).any():
+        raise ValueError("numeric onset hours must be finite or missing")
+    return values, False
+
+
 def add_mods_onset(onsets: pd.DataFrame) -> pd.DataFrame:
     """Return a copy of ``onsets`` with a ``mods`` column.
 
@@ -46,11 +63,7 @@ def add_mods_onset(onsets: pd.DataFrame) -> pd.DataFrame:
     fewer than two organs failed.
     """
     table = onsets.copy()
-    organ_times = table[list(ORGANS)]
-    if all(pd.api.types.is_datetime64_any_dtype(organ_times[c]) for c in ORGANS):
-        values = np.stack([organ_times[c].to_numpy(dtype="datetime64[ns]") for c in ORGANS], axis=1)
-    else:
-        values = organ_times.to_numpy(dtype=float)
+    values, _ = _onset_values(table, ORGANS)
     ordered = np.sort(values, axis=1)                 # missing values sort last
     table["mods"] = ordered[:, 1]
     return table
@@ -79,7 +92,8 @@ def relation_matrices(onsets: pd.DataFrame) -> RelationMatrices:
     organ_idx = {GRAPH_NODES.index(o) for o in ORGANS}
     syndrome_idx = {GRAPH_NODES.index(s) for s in SYNDROME_NODES}
     n = len(GRAPH_NODES)
-    occurred = onsets[list(GRAPH_NODES)].notna().to_numpy()
+    values, datetime = _onset_values(onsets, GRAPH_NODES)
+    occurred = ~np.isnat(values) if datetime else ~np.isnan(values)
 
     r_prec, r_co, r_tr = np.zeros((n, n)), np.zeros((n, n)), np.zeros((n, n))
     s_prec, s_co, s_tr = np.zeros((n, n)), np.zeros((n, n)), np.zeros((n, n))
@@ -112,6 +126,8 @@ def relation_matrices(onsets: pd.DataFrame) -> RelationMatrices:
 
 def prune(relations: RelationMatrices, min_support: int = 50) -> RelationMatrices:
     """Set to zero every edge supported by fewer than ``min_support`` patients."""
+    if isinstance(min_support, (bool, np.bool_)) or not isinstance(min_support, Integral) or min_support < 0:
+        raise ValueError("min_support must be a non-negative integer")
     def keep(r, s):
         return r * (s >= min_support)
 

@@ -73,14 +73,22 @@ class SOFAEGraph:
 
     @classmethod
     def load(cls, path) -> "SOFAEGraph":
-        z = np.load(Path(path), allow_pickle=False)
-        relations = RelationMatrices(
-            precedence=z["R_prec"], cooccurrence=z["R_co"], trigger=z["R_tr"],
-            support_precedence=z["S_prec"], support_cooccurrence=z["S_co"],
-            support_trigger=z["S_tr"], counts=z["counts"])
-        return cls(relations=relations, embeddings=z["embeddings"],
-                   singular_values=z["singular_values"], min_support=int(z["min_support"]),
-                   nodes=tuple(str(n) for n in z["nodes"]))
+        with np.load(Path(path), allow_pickle=False) as z:
+            nodes = tuple(str(n) for n in z["nodes"])
+            if nodes != GRAPH_NODES:
+                raise ValueError("graph archive must preserve the canonical SOFAE node order")
+            n = len(nodes)
+            blocks = {name: z[name] for name in ("R_prec", "R_co", "R_tr", "S_prec", "S_co", "S_tr")}
+            embeddings, counts = z["embeddings"], z["counts"]
+            if (any(block.shape != (n, n) for block in blocks.values()) or counts.shape != (n,)
+                    or embeddings.ndim != 2 or embeddings.shape[0] != n or not embeddings.shape[1]):
+                raise ValueError("graph archive arrays must align with the SOFAE nodes")
+            relations = RelationMatrices(
+                precedence=blocks["R_prec"], cooccurrence=blocks["R_co"], trigger=blocks["R_tr"],
+                support_precedence=blocks["S_prec"], support_cooccurrence=blocks["S_co"],
+                support_trigger=blocks["S_tr"], counts=counts)
+            return cls(relations=relations, embeddings=embeddings, singular_values=z["singular_values"],
+                       min_support=int(z["min_support"]), nodes=nodes)
 
 
 def build_sofae_graph(onsets: pd.DataFrame, min_support: int = 50, dim: int = 8) -> SOFAEGraph:
