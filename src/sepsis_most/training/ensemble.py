@@ -7,6 +7,7 @@ Python values and can be loaded with ``torch.load(weights_only=True)``.
 """
 from __future__ import annotations
 
+import tempfile
 from pathlib import Path
 from numbers import Integral
 from typing import Optional
@@ -97,7 +98,7 @@ class SepsisMOSTEnsemble:
 
     def save(self, path) -> None:
         st = self.standardiser
-        torch.save({
+        state = {
             "format": CHECKPOINT_FORMAT,
             "config": self.config.to_dict(),
             "states": [{k: v.detach().cpu() for k, v in m.state_dict().items()} for m in self.members],
@@ -109,7 +110,18 @@ class SepsisMOSTEnsemble:
             "bin_edges": torch.from_numpy(self.bin_edges),
             "isotonic": None if self.isotonic is None else
             [(torch.from_numpy(np.asarray(kx)), torch.from_numpy(np.asarray(ky))) for kx, ky in self.isotonic],
-        }, Path(path))
+        }
+        path = Path(path)
+        temporary = None
+        try:
+            with tempfile.NamedTemporaryFile(dir=path.parent, prefix=f".{path.name}.",
+                                             suffix=".tmp", delete=False) as handle:
+                temporary = Path(handle.name)
+            torch.save(state, temporary)
+            temporary.replace(path)
+        finally:
+            if temporary is not None:
+                temporary.unlink(missing_ok=True)
 
     @classmethod
     def load(cls, path, device: str = "cpu") -> "SepsisMOSTEnsemble":
