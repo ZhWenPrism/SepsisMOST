@@ -34,6 +34,15 @@ class SepsisMOSTEnsemble:
         self.organ_embeddings = np.array(organ_embeddings, dtype=np.float32, copy=True)
         self.coupling = np.array(coupling, dtype=np.float32, copy=True)
         self.bin_edges = np.array(bin_edges, dtype=float, copy=True)
+        if (self.organ_embeddings.ndim != 2 or self.organ_embeddings.shape[0] != N_ORGANS
+                or not self.organ_embeddings.shape[1] or not np.isfinite(self.organ_embeddings).all()
+                or self.coupling.shape != (N_ORGANS, N_ORGANS) or not np.isfinite(self.coupling).all()):
+            raise ValueError("frozen graph arrays must be finite and align with the six organ systems")
+        if (self.bin_edges.ndim != 1 or not self.bin_edges.size or not np.isfinite(self.bin_edges).all()
+                or np.any(self.bin_edges <= 0) or np.any(np.diff(self.bin_edges) <= 0)):
+            raise ValueError("bin_edges must be finite positive strictly increasing time boundaries")
+        if any(getattr(member, "n_bins", len(self.bin_edges)) != len(self.bin_edges) for member in self.members):
+            raise ValueError("bin_edges must align with every ensemble member")
         self.config = TrainingConfig.from_dict(config.to_dict())
         self.isotonic = None if isotonic is None else [
             (np.array(x, copy=True), np.array(y, copy=True)) for x, y in isotonic]
