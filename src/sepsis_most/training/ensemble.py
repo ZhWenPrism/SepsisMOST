@@ -37,6 +37,11 @@ class SepsisMOSTEnsemble:
         self.config = TrainingConfig.from_dict(config.to_dict())
         self.isotonic = None if isotonic is None else [
             (np.array(x, copy=True), np.array(y, copy=True)) for x, y in isotonic]
+        if self.isotonic is not None:
+            if len(self.isotonic) != N_ORGANS:
+                raise ValueError("isotonic calibration requires one map per organ")
+            for knots_x, knots_y in self.isotonic:
+                isotonic_apply(knots_x, knots_y, np.empty(0))
 
     @torch.no_grad()
     def predict(self, X, S, batch_size: int = 512, device: str = "cpu", calibrated: bool = False):
