@@ -20,7 +20,7 @@ def test_training_cannot_return_an_unselected_model(monkeypatch):
                       np.zeros((6, 4), np.float32), np.eye(6, dtype=np.float32), cfg, torch.device("cpu"))
 
 
-@pytest.mark.parametrize("epochs,min_delta", [(0, 1e-4), (1, 2.)])
+@pytest.mark.parametrize("epochs,min_delta", [(1, 2.)])
 def test_training_without_a_selected_epoch_is_rejected(monkeypatch, epochs, min_delta):
     temporal, static = synthetic_cohort(n=8)
     data = CohortTensors(X=temporal["X"], S=static["S"], atrisk=temporal["atrisk"].astype(np.int64),

@@ -78,6 +78,9 @@ def load_cohort(temporal_path, static_path) -> CohortTensors:
             if values.shape != expected:
                 raise ValueError(f"{key} must have shape {expected}")
             if key == "etime":
+                active = values[z["atrisk"] == 1]
+                if not np.isfinite(active).all() or (active < 0).any():
+                    raise ValueError("etime must contain finite non-negative event or censoring times for at-risk outcomes")
                 continue
             if key == "ebin":
                 valid = np.isin(values, np.arange(len(edges))).all()
@@ -154,6 +157,16 @@ class Standardiser:
 
     @classmethod
     def fit(cls, X, S, train_idx, n_raw: int = N_RAW_CHANNELS) -> "Standardiser":
+        X, S = np.asarray(X), np.asarray(S)
+        if X.ndim != 3 or S.ndim != 2 or len(X) != len(S) or not X.size or not S.size:
+            raise ValueError("standardisation requires aligned non-empty temporal and static matrices")
+        train_idx = np.asarray(train_idx)
+        if (train_idx.ndim != 1 or not train_idx.size or train_idx.dtype.kind not in "iu"
+                or (train_idx < 0).any() or (train_idx >= len(X)).any()
+                or np.unique(train_idx).size != train_idx.size):
+            raise ValueError("train_idx must contain unique in-range integer row indices")
+        if not np.isfinite(X[train_idx]).all() or not np.isfinite(S[train_idx]).all():
+            raise ValueError("training features must be finite before standardisation")
         if (isinstance(n_raw, (bool, np.bool_)) or not isinstance(n_raw, Integral)
                 or not 0 <= n_raw <= X.shape[-1]):
             raise ValueError("n_raw must be an integer between zero and the temporal feature count")
