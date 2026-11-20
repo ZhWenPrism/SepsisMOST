@@ -78,6 +78,9 @@ def load_cohort(temporal_path, static_path) -> CohortTensors:
             if values.shape != expected:
                 raise ValueError(f"{key} must have shape {expected}")
             if key == "etime":
+                active = values[z["atrisk"] == 1]
+                if not np.isfinite(active).all() or (active < 0).any():
+                    raise ValueError("etime must contain finite non-negative event or censoring times for at-risk outcomes")
                 continue
             if key == "ebin":
                 valid = np.isin(values, np.arange(len(edges))).all()
