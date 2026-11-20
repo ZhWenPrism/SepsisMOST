@@ -4,6 +4,7 @@ The defaults reproduce ``configs/model/sepsis_most.yaml``.
 """
 from __future__ import annotations
 
+from math import isfinite
 from collections.abc import Mapping
 from dataclasses import asdict, dataclass, field, fields
 from numbers import Integral
@@ -34,10 +35,25 @@ class OptimConfig:
     min_delta: float = 1e-4
     grad_clip: float = 1.0
 
+    def __post_init__(self):
+        for name in ("epochs", "batch_size", "patience"):
+            value = getattr(self, name)
+            if isinstance(value, bool) or not isinstance(value, Integral) or value < 1:
+                raise ValueError(f"{name} must be a positive integer")
+        for name in ("learning_rate", "weight_decay", "min_delta", "grad_clip"):
+            value = getattr(self, name)
+            positive = name in ("learning_rate", "grad_clip")
+            if not isfinite(value) or value < 0 or (positive and value == 0):
+                raise ValueError(f"{name} must be finite and {'positive' if positive else 'non-negative'}")
+
 
 @dataclass
 class AugmentConfig:
     jitter: float = 0.1                 # standard deviation of the additive input noise
+
+    def __post_init__(self):
+        if not isfinite(self.jitter) or self.jitter < 0:
+            raise ValueError("jitter must be finite and non-negative")
 
 
 @dataclass
