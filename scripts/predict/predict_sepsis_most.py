@@ -9,12 +9,31 @@ The temporal file needs the array ``X`` and the static file the array ``S``
 from __future__ import annotations
 
 import argparse
+import tempfile
 from pathlib import Path
 
 import numpy as np
 
 from sepsis_most.training import SepsisMOSTEnsemble
 from sepsis_most.training.data import load_scoring_inputs
+
+
+def save_predictions(path, bin_edges, predictions) -> Path:
+    path = Path(path)
+    if not str(path).endswith(".npz"):
+        path = Path(str(path) + ".npz")
+    path.parent.mkdir(parents=True, exist_ok=True)
+    temporary = None
+    try:
+        with tempfile.NamedTemporaryFile(mode="w+b", dir=path.parent, prefix=f".{path.name}.",
+                                         suffix=".tmp", delete=False) as handle:
+            temporary = Path(handle.name)
+            np.savez_compressed(handle, bin_edges=bin_edges, **predictions)
+        temporary.replace(path)
+    finally:
+        if temporary is not None:
+            temporary.unlink(missing_ok=True)
+    return path
 
 
 def main() -> None:
@@ -30,9 +49,8 @@ def main() -> None:
     X, S = load_scoring_inputs(args.temporal, args.static)
     ens = SepsisMOSTEnsemble.load(args.checkpoint, device=args.device)
     pred = ens.predict(X, S, device=args.device, calibrated=args.calibrated)
-    Path(args.out).parent.mkdir(parents=True, exist_ok=True)
-    np.savez_compressed(args.out, bin_edges=ens.bin_edges, **pred)
-    print(f"scored {len(X):,} rows -> {args.out}")
+    out = save_predictions(args.out, ens.bin_edges, pred)
+    print(f"scored {len(X):,} rows -> {out}")
 
 
 if __name__ == "__main__":
