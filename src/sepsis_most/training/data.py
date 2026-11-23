@@ -155,6 +155,17 @@ class Standardiser:
     smu: np.ndarray
     ssd: np.ndarray
 
+    def __post_init__(self) -> None:
+        for mean_name, scale_name in (("mu", "sd"), ("smu", "ssd")):
+            mean, scale = np.asarray(getattr(self, mean_name)), np.asarray(getattr(self, scale_name))
+            if (mean.ndim != 1 or scale.shape != mean.shape
+                    or mean.dtype.kind not in "iuf" or scale.dtype.kind not in "iuf"
+                    or not np.isfinite(mean).all() or not np.isfinite(scale).all()
+                    or np.any(scale <= 0)):
+                raise ValueError(f"{mean_name} and {scale_name} must be aligned finite vectors with positive scales")
+            setattr(self, mean_name, mean.copy())
+            setattr(self, scale_name, scale.copy())
+
     @classmethod
     def fit(cls, X, S, train_idx, n_raw: int = N_RAW_CHANNELS) -> "Standardiser":
         X, S = np.asarray(X), np.asarray(S)

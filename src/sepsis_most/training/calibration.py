@@ -38,6 +38,7 @@ def isotonic_apply(knots_x, knots_y, x):
     knots_x, knots_y = np.asarray(knots_x, dtype=float), np.asarray(knots_y, dtype=float)
     if (knots_x.ndim != 1 or not len(knots_x) or knots_y.shape != knots_x.shape
             or not np.isfinite(knots_x).all() or not np.isfinite(knots_y).all()
-            or np.any(knots_x[1:] <= knots_x[:-1])):
-        raise ValueError("calibration knots must be finite aligned vectors with strictly increasing inputs")
+            or np.any(knots_x[1:] <= knots_x[:-1])
+            or np.any(knots_y[1:] < knots_y[:-1] - 1e-12)):
+        raise ValueError("calibration knots must be finite aligned vectors with strictly increasing inputs and non-decreasing outputs")
     return np.interp(x, knots_x, knots_y)
