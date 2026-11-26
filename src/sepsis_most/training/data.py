@@ -67,6 +67,8 @@ def load_cohort(temporal_path, static_path) -> CohortTensors:
         n = len(X)
         if n != len(S):
             raise ValueError("temporal and static files have different numbers of rows")
+        if not np.isfinite(X).all() or not np.isfinite(S).all():
+            raise ValueError("X and S must contain finite training features")
         _check_stay_alignment(z, s, n)
         edges = z["bin_edges"].astype(float)
         if (edges.ndim != 1 or not edges.size or not np.isfinite(edges).all()
