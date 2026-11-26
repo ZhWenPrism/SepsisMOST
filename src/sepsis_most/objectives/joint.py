@@ -11,6 +11,7 @@ expert specialisation loss (L_spec, Eq. 23).
 from __future__ import annotations
 
 from dataclasses import dataclass
+from math import isfinite
 
 import torch
 import torch.nn.functional as F
@@ -30,6 +31,13 @@ class LossWeights:
     spec: float = 0.2           # lambda_spec
     rank_sigma: float = 0.1     # sigma of the ranking loss
     spec_tau: float = 2.0       # tau of the specialisation target
+
+    def __post_init__(self):
+        for name in ("rank", "syn", "lb", "spec", "rank_sigma", "spec_tau"):
+            value = getattr(self, name)
+            positive = name in ("rank_sigma", "spec_tau")
+            if not isfinite(value) or value < 0 or (positive and value == 0):
+                raise ValueError(f"{name} must be finite and {'positive' if positive else 'non-negative'}")
 
 
 def joint_objective(out, cause, ebin, atrisk, etime, evt, events, sofa_mean,

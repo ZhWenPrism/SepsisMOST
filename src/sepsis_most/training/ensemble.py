@@ -78,19 +78,22 @@ class SepsisMOSTEnsemble:
                 out["cif_7d_calibrated"] = np.empty((0, N_ORGANS), dtype=float)
             return out
         Xn, Sn = self.standardiser.transform_for_scoring(X, S)
-        cifs, probs = [], []
         for model in self.members:
             model.to(device).eval()
-            c_all, p_all = [], []
-            for a in range(0, len(Xn), batch_size):
-                xb = torch.as_tensor(Xn[a:a + batch_size], dtype=torch.float32, device=device)
-                sb = torch.as_tensor(Sn[a:a + batch_size], dtype=torch.float32, device=device)
-                c, p = model.predict(xb, sb)
-                c_all.append(c.cpu().numpy())
-                p_all.append(p.cpu().numpy())
-            cifs.append(np.concatenate(c_all))
-            probs.append(np.concatenate(p_all))
-        out = {"cif": np.mean(cifs, 0), "event_prob": np.mean(probs, 0)}
+        out = None
+        for a in range(0, len(Xn), batch_size):
+            xb = torch.as_tensor(Xn[a:a + batch_size], dtype=torch.float32, device=device)
+            sb = torch.as_tensor(Sn[a:a + batch_size], dtype=torch.float32, device=device)
+            predictions = [model.predict(xb, sb) for model in self.members]
+            batch_cif = np.mean([c.cpu().numpy() for c, _ in predictions], axis=0)
+            batch_prob = np.mean([p.cpu().numpy() for _, p in predictions], axis=0)
+            if out is None:
+                out = {
+                    "cif": np.empty((len(Xn), *batch_cif.shape[1:]), dtype=batch_cif.dtype),
+                    "event_prob": np.empty((len(Xn), *batch_prob.shape[1:]), dtype=batch_prob.dtype),
+                }
+            out["cif"][a:a + len(xb)] = batch_cif
+            out["event_prob"][a:a + len(xb)] = batch_prob
         if calibrated:
             out["cif_7d_calibrated"] = np.stack(
                 [isotonic_apply(kx, ky, out["cif"][:, k, -1]) for k, (kx, ky) in enumerate(self.isotonic)], 1)

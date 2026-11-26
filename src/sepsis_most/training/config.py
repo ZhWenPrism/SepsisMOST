@@ -24,6 +24,10 @@ class ModelConfig:
     top_k: int = 2                      # experts kept by the gate
     dropout: float = 0.15
 
+    def __post_init__(self):
+        if not isfinite(self.dropout) or not 0 <= self.dropout <= 1:
+            raise ValueError("dropout must be finite and in [0, 1]")
+
 
 @dataclass
 class OptimConfig:
