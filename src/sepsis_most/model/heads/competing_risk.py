@@ -14,14 +14,18 @@ import torch
 import torch.nn.functional as F
 
 
+def _log_decode(logits):
+    log_pr = F.log_softmax(logits, dim=-1)
+    logs = log_pr[..., 2]
+    pre = torch.cat([torch.zeros_like(logs[..., :1]),
+                     torch.cumsum(logs, -1)[..., :-1]], -1)
+    return log_pr, logs, pre
+
+
 def cr_decode(logits):
     """logits (*, K, 3) -> state probabilities, log P(survive bin), log S before bin."""
-    log_pr = F.log_softmax(logits, dim=-1)
-    pr = log_pr.exp()                                          # [fail, death, survive]
-    logs = log_pr[..., 2]                                      # log survival in each bin
-    pre = torch.cat([torch.zeros_like(logs[..., :1]),
-                     torch.cumsum(logs, -1)[..., :-1]], -1)         # log survival before each bin
-    return pr, logs, pre
+    log_pr, logs, pre = _log_decode(logits)
+    return log_pr.exp(), logs, pre
 
 
 def cumulative_incidence(logits):
