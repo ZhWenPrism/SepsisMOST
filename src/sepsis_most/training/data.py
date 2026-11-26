@@ -90,6 +90,9 @@ def load_cohort(temporal_path, static_path) -> CohortTensors:
                 valid = np.isin(values, (-1, 0, 1) if key == "cause" else (0, 1)).all()
             if not valid:
                 raise ValueError(f"{key} contains invalid label codes")
+        active = z["atrisk"] == 1
+        if np.any((z["evt"][active] == 1) != (z["cause"][active] == 0)):
+            raise ValueError("cause and evt must agree for at-risk organ outcomes")
         return CohortTensors(
             X=X, S=S,
             atrisk=z["atrisk"].astype(np.int64), cause=z["cause"].astype(np.int64),
